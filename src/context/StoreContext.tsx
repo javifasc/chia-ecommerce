@@ -1,0 +1,528 @@
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { supabaseService } from '../lib/supabaseService';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from './AuthContext';
+
+// --- Types ---
+
+import {
+    Product,
+    CartItem,
+    OrderStatus,
+    Order,
+    HeroPromo,
+    FeaturedPromo
+} from '../types';
+
+export type {
+    Product,
+    CartItem,
+    OrderStatus,
+    Order,
+    HeroPromo,
+    FeaturedPromo
+};
+
+export type State = {
+    isLoading: boolean;
+    products: Product[];
+    cart: CartItem[];
+    orders: Order[];
+    historyOrders: Order[];
+    favorites: string[];
+    promotions: {
+        hero: HeroPromo;
+        featured: FeaturedPromo;
+    };
+    deliveryFees: {
+        [key: string]: number;
+    };
+    freeShippingThreshold: number;
+    hasUnreadOrders: boolean;
+    formatWeight: (val: number, isFractional?: boolean) => string;
+};
+
+type Action =
+    | { type: 'SET_LOADING'; loading: boolean }
+    | { type: 'SET_INITIAL_DATA'; data: Partial<State> }
+    | { type: 'ADD_TO_CART'; productId: string }
+    | { type: 'DECREMENT_CART'; productId: string }
+    | { type: 'REMOVE_FROM_CART'; productId: string }
+    | { type: 'UPDATE_CART_QUANTITY'; productId: string; quantity: number }
+    | { type: 'CLEAR_DELIVERED_ORDERS' }
+    | { type: 'UPDATE_DELIVERY_FEES'; fees: { [key: string]: number } }
+    | { type: 'UPDATE_ORDER_STATUS'; orderId: string; status: OrderStatus }
+    | { type: 'TOGGLE_FAVORITE'; productId: string }
+    | { type: 'ADD_PRODUCT'; product: Product }
+    | { type: 'EDIT_PRODUCT'; product: Product }
+    | { type: 'DELETE_PRODUCT'; productId: string }
+    | { type: 'SET_ORDERS'; orders: Order[] }
+    | { type: 'SET_PROMOTIONS'; promotions: { hero: HeroPromo; featured: FeaturedPromo } }
+    | { type: 'SET_UNREAD_ORDERS'; hasUnread: boolean }
+    | { type: 'PLACE_ORDER_LOCAL'; order: Order };
+
+// --- Initial Data ---
+
+const INITIAL_PROMOTIONS = {
+    hero: {
+        tag: 'Novedad',
+        title: 'Cosecha Fresca de Temporada',
+        description: 'Obtén un 20% de descuento en orgánicos esta semana.',
+        image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1074&auto=format&fit=crop',
+        buttonText: 'Comprar Ahora'
+    },
+    featured: {
+        sectionTitle: 'Ofertas Frescas',
+        itemTitle: 'Paquete Detox',
+        itemDescription: 'Incluye 5 jugos y 2 ensaladas',
+        itemImage: 'https://images.unsplash.com/photo-1544306094-e2dca9f57142?q=80&w=600&auto=format&fit=crop',
+        price: 35.00,
+        oldPrice: 45.00
+    }
+};
+
+// --- Reducer ---
+
+function storeReducer(state: State, action: Action): State {
+    switch (action.type) {
+        case 'SET_LOADING':
+            return { ...state, isLoading: action.loading };
+
+        case 'SET_INITIAL_DATA':
+            return { ...state, ...action.data, isLoading: false };
+
+        case 'SET_ORDERS':
+            return {
+                ...state,
+                orders: action.orders.filter(o => o.status !== 'Entregado'),
+                historyOrders: action.orders.filter(o => o.status === 'Entregado')
+            };
+
+        case 'SET_PROMOTIONS':
+            return { ...state, promotions: action.promotions };
+
+        case 'ADD_TO_CART': {
+            const product = state.products.find(p => p.id === action.productId);
+            const step = product?.isFractional ? ((product.fractionalStep || 0) / 1000) : 1;
+            const existing = state.cart.find(item => item.productId === action.productId);
+
+            if (existing) {
+                return {
+                    ...state,
+                    cart: state.cart.map(item =>
+                        item.productId === action.productId
+                            ? { ...item, quantity: Number((item.quantity + step).toFixed(3)) }
+                            : item
+                    ),
+                };
+            }
+            return { ...state, cart: [...state.cart, { productId: action.productId, quantity: step }] };
+        }
+
+        case 'DECREMENT_CART': {
+            const product = state.products.find(p => p.id === action.productId);
+            const step = product?.isFractional ? ((product.fractionalStep || 0) / 1000) : 1;
+            const existing = state.cart.find(item => item.productId === action.productId);
+
+            if (!existing) return state;
+
+            const newQty = Number((existing.quantity - step).toFixed(3));
+            if (newQty <= 0) {
+                return {
+                    ...state,
+                    cart: state.cart.filter(item => item.productId !== action.productId)
+                };
+            }
+
+            return {
+                ...state,
+                cart: state.cart.map(item =>
+                    item.productId === action.productId ? { ...item, quantity: newQty } : item
+                ),
+            };
+        }
+
+        case 'UPDATE_CART_QUANTITY': {
+            if (action.quantity <= 0) {
+                return { ...state, cart: state.cart.filter(item => item.productId !== action.productId) };
+            }
+            return {
+                ...state,
+                cart: state.cart.map(item =>
+                    item.productId === action.productId ? { ...item, quantity: action.quantity } : item
+                ),
+            };
+        }
+
+        case 'REMOVE_FROM_CART':
+            return { ...state, cart: state.cart.filter(item => item.productId !== action.productId) };
+
+        case 'PLACE_ORDER_LOCAL': {
+            const updatedProducts = state.products.map(p => {
+                const cartItem = action.order.items.find(ci => ci.productId === p.id);
+                if (cartItem) {
+                    return {
+                        ...p,
+                        availableStock: p.availableStock - cartItem.quantity,
+                        reservedStock: p.reservedStock + cartItem.quantity,
+                    };
+                }
+                return p;
+            });
+
+            return {
+                ...state,
+                products: updatedProducts,
+                orders: [action.order, ...state.orders],
+                cart: [],
+            };
+        }
+
+        case 'UPDATE_ORDER_STATUS': {
+            const order = [...state.orders, ...state.historyOrders].find(o => o.id === action.orderId);
+            if (!order) return state;
+
+            let products = [...state.products];
+            if (action.status === 'Entregado') {
+                products = products.map(p => {
+                    const orderItem = order.items.find(oi => oi.productId === p.id);
+                    if (orderItem) {
+                        return { ...p, reservedStock: p.reservedStock - orderItem.quantity };
+                    }
+                    return p;
+                });
+            }
+
+            const allOrders = [...state.orders, ...state.historyOrders].map(o =>
+                o.id === action.orderId ? { ...o, status: action.status } : o
+            );
+
+            return {
+                ...state,
+                products,
+                orders: allOrders.filter(o => o.status !== 'Entregado'),
+                historyOrders: allOrders.filter(o => o.status === 'Entregado')
+            };
+        }
+
+        case 'CLEAR_DELIVERED_ORDERS':
+            return {
+                ...state,
+                historyOrders: []
+            };
+
+        case 'UPDATE_DELIVERY_FEES': {
+            const threshold = action.fees['_FREE_THRESHOLD_'] || 0;
+            const cleanFees = { ...action.fees };
+            delete cleanFees['_FREE_THRESHOLD_'];
+            return {
+                ...state,
+                deliveryFees: cleanFees,
+                freeShippingThreshold: threshold
+            };
+        }
+
+        case 'TOGGLE_FAVORITE': {
+            const isFav = state.favorites.includes(action.productId);
+            const favorites = isFav
+                ? state.favorites.filter(id => id !== action.productId)
+                : [...state.favorites, action.productId];
+
+            localStorage.setItem('chia_favorites', JSON.stringify(favorites));
+            return { ...state, favorites };
+        }
+
+        case 'ADD_PRODUCT':
+            return { ...state, products: [action.product, ...state.products] };
+
+        case 'EDIT_PRODUCT':
+            return {
+                ...state,
+                products: state.products.map(p => p.id === action.product.id ? action.product : p)
+            };
+
+        case 'DELETE_PRODUCT':
+            return {
+                ...state,
+                products: state.products.filter(p => p.id !== action.productId),
+                favorites: state.favorites.filter(id => id !== action.productId),
+                cart: state.cart.filter(item => item.productId !== action.productId)
+            };
+
+        case 'SET_UNREAD_ORDERS':
+            return { ...state, hasUnreadOrders: action.hasUnread };
+
+        default:
+            return state;
+    }
+}
+
+// --- Context ---
+
+const StoreContext = createContext<{
+    state: State;
+    dispatch: React.Dispatch<Action>;
+    addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+    updateProduct: (product: Product) => Promise<void>;
+    deleteProduct: (id: string) => Promise<void>;
+    updateStock: (productId: string, adjustment: number) => Promise<void>;
+    placeOrder: (data: any) => Promise<string>;
+    updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+    updateDeliveryFees: (fees: Record<string, number>) => Promise<void>;
+    updatePromotions: (hero?: HeroPromo, featured?: FeaturedPromo) => Promise<void>;
+    toggleNewArrival: (productId: string) => Promise<void>;
+    markOrdersAsRead: () => void;
+    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => Promise<{ updated: number; created: number; errors: string[] }>;
+    formatWeight: (val: number, isFractional?: boolean) => string;
+} | undefined>(undefined);
+
+export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    const [state, dispatch] = useReducer(storeReducer, {
+        isLoading: true,
+        products: [],
+        cart: [],
+        orders: [],
+        historyOrders: [],
+        favorites: JSON.parse(localStorage.getItem('chia_favorites') || '[]'),
+        promotions: INITIAL_PROMOTIONS,
+        deliveryFees: {},
+        freeShippingThreshold: 0,
+        hasUnreadOrders: false,
+        formatWeight: (val: number, isFractional?: boolean) => {
+            if (!isFractional) return `${val} un.`;
+            if (val < 1) return `${Math.round(val * 1000)}gr`;
+            return `${val}kg`;
+        },
+    });
+
+    useEffect(() => {
+        const loadData = async (retryCount = 0) => {
+            if (retryCount === 0) dispatch({ type: 'SET_LOADING', loading: true });
+
+            try {
+                // First, prioritize public data that doesn't need Auth Lock
+                const [products, fees, promos] = await Promise.all([
+                    supabaseService.getProducts(),
+                    supabaseService.getDeliveryFees(),
+                    supabaseService.getPromotions()
+                ]);
+
+                const threshold = fees['_FREE_THRESHOLD_'] || 0;
+                const cleanFees = { ...fees };
+                delete cleanFees['_FREE_THRESHOLD_'];
+
+                // Update state with public data immediately
+                dispatch({
+                    type: 'SET_INITIAL_DATA',
+                    data: {
+                        products,
+                        deliveryFees: cleanFees,
+                        freeShippingThreshold: threshold,
+                        promotions: promos
+                    }
+                });
+
+                // Then try to load private data (orders)
+                try {
+                    const orders = await supabaseService.getOrders();
+                    dispatch({
+                        type: 'SET_ORDERS',
+                        orders: orders || []
+                    });
+                } catch (orderErr) {
+                    console.warn('Could not load orders (Auth might be locked or unauthenticated):', orderErr);
+                }
+
+            } catch (error) {
+                console.error(`Error loading Supabase data (Attempt ${retryCount + 1}):`, error);
+                
+                // If it's a lock error and we haven't retried yet, wait and retry
+                if (retryCount < 2) {
+                    setTimeout(() => loadData(retryCount + 1), 1000);
+                    return;
+                }
+                
+                dispatch({ type: 'SET_LOADING', loading: false });
+            }
+        };
+
+        loadData();
+
+        // Subscribe to Realtime Updates
+        // We recreate channels when auth state changes to ensure RLS context is updated
+        const ordersChannel = supabase
+            .channel('orders-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'orders' }, async (payload: any) => {
+                console.log('Realtime Order Change:', payload.eventType);
+                // Debounce/Delay fetch slightly to give order_items time to insert if it's a new order
+                setTimeout(async () => {
+                    const orders = await supabaseService.getOrders();
+                    dispatch({ type: 'SET_ORDERS', orders });
+                }, 100);
+
+                if (payload.eventType === 'INSERT') {
+                    dispatch({ type: 'SET_UNREAD_ORDERS', hasUnread: true });
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                        audio.play().catch(() => console.log('Sound blocked by browser interaction policy'));
+                    } catch (e) {
+                        console.error('Error playing notification:', e);
+                    }
+                }
+            })
+            .subscribe((status) => console.log('Orders Channel Status:', status));
+
+        const itemsChannel = supabase
+            .channel('items-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'order_items' }, async () => {
+                const orders = await supabaseService.getOrders();
+                dispatch({ type: 'SET_ORDERS', orders });
+            })
+            .subscribe();
+
+        const productsChannel = supabase
+            .channel('products-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'products' }, async () => {
+                const products = await supabaseService.getProducts();
+                dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
+            })
+            .subscribe();
+
+        const promoChannel = supabase
+            .channel('promos-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'promotions' }, async () => {
+                const promos = await supabaseService.getPromotions();
+                dispatch({ type: 'SET_PROMOTIONS', promotions: promos });
+            })
+            .subscribe();
+
+        const feesChannel = supabase
+            .channel('fees-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'delivery_fees' }, async () => {
+                const fees = await supabaseService.getDeliveryFees();
+                dispatch({ type: 'UPDATE_DELIVERY_FEES', fees });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(ordersChannel);
+            supabase.removeChannel(itemsChannel);
+            supabase.removeChannel(productsChannel);
+            supabase.removeChannel(promoChannel);
+            supabase.removeChannel(feesChannel);
+        };
+    }, [isAuthenticated]);
+
+    const addProduct = async (product: Omit<Product, 'id'>) => {
+        await supabaseService.addProduct(product);
+    };
+
+    const updateProduct = async (product: Product) => {
+        await supabaseService.updateProduct(product);
+    };
+
+    const deleteProduct = async (id: string) => {
+        await supabaseService.deleteProduct(id);
+    };
+
+    const updateStock = async (productId: string, adjustment: number) => {
+        const product = state.products.find(p => p.id === productId);
+        if (!product) return;
+
+        await supabaseService.updateProduct({
+            ...product,
+            availableStock: Number((product.availableStock + adjustment).toFixed(3))
+        });
+    };
+
+    const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+        await supabaseService.updateOrderStatus(orderId, status);
+        dispatch({ type: 'UPDATE_ORDER_STATUS', orderId, status });
+    };
+
+    const updateDeliveryFees = async (fees: Record<string, number>) => {
+        await supabaseService.updateDeliveryFees(fees);
+    };
+
+    const updatePromotions = async (hero?: HeroPromo, featured?: FeaturedPromo) => {
+        await supabaseService.updatePromotions(hero, featured);
+        dispatch({
+            type: 'SET_PROMOTIONS',
+            promotions: {
+                hero: hero || state.promotions.hero,
+                featured: featured || state.promotions.featured
+            }
+        });
+    };
+
+    const toggleNewArrival = async (productId: string) => {
+        const product = state.products.find(p => p.id === productId);
+        if (!product) return;
+
+        const updatedProduct = { ...product, isNewArrival: !product.isNewArrival };
+        await supabaseService.updateProduct(updatedProduct);
+        dispatch({ type: 'EDIT_PRODUCT', product: updatedProduct });
+    };
+
+    const markOrdersAsRead = () => {
+        dispatch({ type: 'SET_UNREAD_ORDERS', hasUnread: false });
+    };
+
+    const placeOrder = async (orderData: any): Promise<string> => {
+        const orderItems = state.cart.map(cartItem => {
+            const product = state.products.find(p => p.id === cartItem.productId)!;
+            return { ...cartItem, name: product.name, price: product.price };
+        });
+
+        const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const tax = subtotal * 0.05;
+        const deliveryFee = orderData.deliveryFee || 0;
+        const total = subtotal + tax + deliveryFee;
+
+        const orderId = await supabaseService.createOrder({
+            ...orderData,
+            status: 'Pendiente',
+            items: orderItems,
+            total
+        });
+
+        const newOrder: Order = {
+            id: orderId,
+            ...orderData,
+            items: orderItems,
+            total,
+            status: 'Pendiente',
+            createdAt: new Date().toISOString()
+        };
+
+        dispatch({ type: 'PLACE_ORDER_LOCAL', order: newOrder });
+        return orderId;
+    };
+
+    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => {
+        const result = await supabaseService.bulkUpsertFromImport(rows);
+        // Refresh products after import
+        const products = await supabaseService.getProducts();
+        dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
+        return result;
+    };
+
+    return (
+        <StoreContext.Provider value={{
+            state, dispatch, addProduct, updateProduct, deleteProduct, updateStock,
+            placeOrder, updateOrderStatus, updateDeliveryFees, updatePromotions, importStockFile,
+            toggleNewArrival,
+            markOrdersAsRead,
+            formatWeight: state.formatWeight
+        }}>
+            {children}
+        </StoreContext.Provider>
+    );
+};
+
+export const useStore = () => {
+    const context = useContext(StoreContext);
+    if (!context) throw new Error('useStore must be used within StoreProvider');
+    return context;
+};
