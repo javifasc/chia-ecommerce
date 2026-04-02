@@ -274,6 +274,7 @@ const StoreContext = createContext<{
     markOrdersAsRead: () => void;
     importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => Promise<{ updated: number; created: number; errors: string[] }>;
     formatWeight: (val: number, isFractional?: boolean) => string;
+    refreshProducts: () => Promise<void>;
 } | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -415,11 +416,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [isAuthenticated]);
 
     const addProduct = async (product: Omit<Product, 'id'>) => {
-        await supabaseService.addProduct(product);
+        const data = await supabaseService.addProduct(product);
+        const newProduct: Product = {
+            id: data.id,
+            codigo: data.codigo,
+            name: data.name,
+            description: data.description,
+            fullDescription: data.full_description,
+            price: Number(data.price),
+            category: data.category,
+            subcategory: data.subcategory,
+            image: data.image,
+            unit: data.unit,
+            availableStock: Number(data.available_stock),
+            reservedStock: Number(data.reserved_stock),
+            isFractional: data.is_fractional,
+            fractionalStep: Number(data.fractional_step || 1),
+            badges: data.badges,
+            nutritionalInfo: data.nutritional_info,
+            isNewArrival: data.is_new_arrival
+        };
+        dispatch({ type: 'ADD_PRODUCT', product: newProduct });
     };
 
     const updateProduct = async (product: Product) => {
         await supabaseService.updateProduct(product);
+        dispatch({ type: 'EDIT_PRODUCT', product });
     };
 
     const deleteProduct = async (id: string) => {
@@ -430,10 +452,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const product = state.products.find(p => p.id === productId);
         if (!product) return;
 
-        await supabaseService.updateProduct({
+        const updatedProduct = {
             ...product,
             availableStock: Number((product.availableStock + adjustment).toFixed(3))
-        });
+        };
+
+        // Optimistic local update
+        dispatch({ type: 'EDIT_PRODUCT', product: updatedProduct });
+
+        try {
+            await supabaseService.updateProduct(updatedProduct);
+        } catch (error) {
+            // Revert on error
+            console.error('Failed to update stock in Supabase, reverting local state:', error);
+            dispatch({ type: 'EDIT_PRODUCT', product });
+            throw error;
+        }
     };
 
     const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
@@ -508,13 +542,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return result;
     };
 
+    const refreshProducts = async () => {
+        const products = await supabaseService.getProducts();
+        dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
+    };
+
     return (
         <StoreContext.Provider value={{
             state, dispatch, addProduct, updateProduct, deleteProduct, updateStock,
             placeOrder, updateOrderStatus, updateDeliveryFees, updatePromotions, importStockFile,
             toggleNewArrival,
             markOrdersAsRead,
-            formatWeight: state.formatWeight
+            formatWeight: state.formatWeight,
+            refreshProducts
         }}>
             {children}
         </StoreContext.Provider>

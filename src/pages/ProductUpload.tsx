@@ -13,6 +13,7 @@ const ProductUpload = () => {
     const { id } = useParams();
     const isEditMode = !!id;
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -99,6 +100,7 @@ const ProductUpload = () => {
             } : undefined
         };
 
+        setIsSubmitting(true);
         try {
             if (isEditMode) {
                 await updateProduct(newProduct);
@@ -111,7 +113,10 @@ const ProductUpload = () => {
             navigate('/admin/inventory');
         } catch (error: any) {
             console.error('Error al guardar producto:', error);
-            showToast('Hubo un error al guardar el producto. Por favor intenta de nuevo.', 'error');
+            const errorMessage = error?.message || error?.details || 'Error deconocido';
+            showToast(`Error al guardar: ${errorMessage}`, 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -122,7 +127,13 @@ const ProductUpload = () => {
                     <span className="material-symbols-outlined text-2xl">arrow_back</span>
                 </Link>
                 <h1 className="text-lg font-bold tracking-tight">{isEditMode ? 'Editar Producto' : 'Nuevo Producto'}</h1>
-                <button onClick={handleSaveProduct} className="text-sm font-bold text-primary px-2 py-1">Guardar</button>
+                <button
+                    onClick={handleSaveProduct}
+                    disabled={isSubmitting}
+                    className={`text-sm font-bold px-2 py-1 ${isSubmitting ? 'text-slate-400' : 'text-primary'}`}
+                >
+                    {isSubmitting ? '...' : 'Guardar'}
+                </button>
             </header>
 
             <main className="px-5 py-6 space-y-6 text-left">
@@ -355,10 +366,23 @@ const ProductUpload = () => {
             <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white/90 dark:bg-background-dark/90 px-5 pb-10 pt-4 backdrop-blur-lg border-t border-slate-100 dark:border-slate-800 z-40">
                 <button
                     onClick={handleSaveProduct}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-sm font-bold text-slate-900 shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all"
+                    disabled={isSubmitting}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold transition-all shadow-lg
+                        ${isSubmitting
+                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none'
+                            : 'bg-primary text-slate-900 shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98]'}`}
                 >
-                    <span>{isEditMode ? 'Actualizar Producto' : 'Publicar Producto'}</span>
-                    <span className="material-symbols-outlined text-lg font-bold">check</span>
+                    {isSubmitting ? (
+                        <>
+                            <span>Guardando...</span>
+                            <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                        </>
+                    ) : (
+                        <>
+                            <span>{isEditMode ? 'Actualizar Producto' : 'Publicar Producto'}</span>
+                            <span className="material-symbols-outlined text-lg font-bold">check</span>
+                        </>
+                    )}
                 </button>
             </div>
 

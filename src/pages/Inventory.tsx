@@ -6,8 +6,9 @@ import { useNotifications } from '../context/NotificationContext';
 import { parseStockXLSX, ParseResult } from '../utils/xlsxParser';
 
 const Inventory = () => {
-    const { state, deleteProduct, updateStock, importStockFile, formatWeight, toggleNewArrival } = useStore();
+    const { state, deleteProduct, updateStock, importStockFile, formatWeight, toggleNewArrival, refreshProducts } = useStore();
     const { showToast, showConfirm } = useNotifications();
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('Todo');
     const [selectedSubcategory, setSelectedSubcategory] = useState('Todo');
     const [searchQuery, setSearchQuery] = useState('');
@@ -202,13 +203,29 @@ const Inventory = () => {
                         <span className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <h1 className="text-xl font-bold flex-1 text-center"><span className="text-primary mr-1">#CHIA</span> Inventario</h1>
-                    <button
-                        onClick={() => setShowImport(true)}
-                        className="p-2 -mr-2 rounded-full hover:bg-primary/10 text-primary transition-colors relative group"
-                        title="Importar stock desde archivo"
-                    >
-                        <span className="material-symbols-outlined">upload_file</span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={async () => {
+                                setIsRefreshing(true);
+                                try {
+                                    await refreshProducts();
+                                } finally {
+                                    setIsRefreshing(false);
+                                }
+                            }}
+                            className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all ${isRefreshing ? 'animate-spin text-primary' : 'text-slate-400'}`}
+                            title="Refrescar datos"
+                        >
+                            <span className="material-symbols-outlined">refresh</span>
+                        </button>
+                        <button
+                            onClick={() => setShowImport(true)}
+                            className="p-2 -mr-2 rounded-full hover:bg-primary/10 text-primary transition-colors relative group"
+                            title="Importar stock desde archivo"
+                        >
+                            <span className="material-symbols-outlined">upload_file</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
