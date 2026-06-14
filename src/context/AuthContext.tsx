@@ -20,6 +20,7 @@ type AuthContextType = {
     login: (email: string, password: string) => Promise<{ error: any }>;
     signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
     logout: () => Promise<void>;
+    signInWithGoogle: () => Promise<{ error: any }>;
     updateProfile: (data: Partial<ProfileData>) => Promise<{ error: any }>;
 };
 
@@ -106,6 +107,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(null);
     };
 
+    const signInWithGoogle = async () => {
+        const result = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                },
+            },
+        });
+        return { error: result.error };
+    };
+
     const updateProfile = async (data: Partial<ProfileData>) => {
         if (!user) return { error: new Error('No user logged in') };
 
@@ -130,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             login, 
             signUp, 
             logout, 
+            signInWithGoogle,
             updateProfile 
         }}>
             {children}

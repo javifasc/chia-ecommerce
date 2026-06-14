@@ -19,14 +19,17 @@ const AdminLogin = () => {
         setIsLoading(true);
         setError(null);
 
-        const { error } = await login(email, password);
-
-        if (!error) {
+        const result = await login(email, password);
+        
+        if (!result.error) {
             navigate(from, { replace: true });
         } else {
-            setError('Credenciales inválidas. Intenta de nuevo.');
+            const errorMessage = result.error.message === 'Invalid login credentials' 
+                ? 'Email o contraseña incorrectos.' 
+                : result.error.message;
+
+            setError(errorMessage);
             setIsLoading(false);
-            // Vibrate if on mobile
             if (window.navigator.vibrate) window.navigator.vibrate(200);
         }
     };

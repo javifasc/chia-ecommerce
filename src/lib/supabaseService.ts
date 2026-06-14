@@ -22,7 +22,7 @@ export const supabaseService = {
             price: Number(p.price),
             category: p.category,
             subcategory: p.subcategory,
-            image: p.image,
+            image: p.image || '/logo.png',
             unit: p.unit,
             availableStock: Number(p.available_stock),
             reservedStock: Number(p.reserved_stock),
