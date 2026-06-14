@@ -44,8 +44,14 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 const BUCKET_NAME = 'product-images';
 const FOTO_DIR = path.join(__dirname, '..', 'FOTO');
 
+// Función para limpiar códigos (quitar espacios y a minúsculas)
+const cleanCode = (code) => {
+    if (!code) return '';
+    return code.replace(/\s+/g, '').toLowerCase().trim();
+};
+
 async function main() {
-    console.log('=== Iniciando carga automática de fotos ===');
+    console.log('=== Iniciando carga optimizada de fotos ===');
     console.log(`Carpeta de fotos: ${FOTO_DIR}`);
 
     if (!fs.existsSync(FOTO_DIR)) {
@@ -77,52 +83,54 @@ async function main() {
         console.log(`Bucket "${BUCKET_NAME}" verificado.`);
     }
 
-    // 4. Leer archivos de la carpeta FOTO
+    // 4. Obtener todos los productos de la base de datos (Optimización: 1 sola consulta)
+    console.log('Obteniendo catálogo de productos desde Supabase...');
+    const { data: products, error: fetchError } = await supabase
+        .from('products')
+        .select('id, codigo, name');
+
+    if (fetchError) {
+        console.error('Error al obtener productos:', fetchError.message);
+        process.exit(1);
+    }
+
+    // Mapear productos por su código limpio
+    const productMap = {};
+    products.forEach(p => {
+        if (p.codigo) {
+            const clean = cleanCode(p.codigo);
+            productMap[clean] = p;
+        }
+    });
+
+    // 5. Leer archivos de la carpeta FOTO
     const files = fs.readdirSync(FOTO_DIR).filter(file => {
         const ext = path.extname(file).toLowerCase();
         return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
     });
 
-    console.log(`Se encontraron ${files.length} imágenes para procesar.`);
-
-    // Argumento para modo prueba (ej: node upload-photos.js --test)
-    const isTest = process.argv.includes('--test');
-    if (isTest) {
-        console.log('--- MODO DE PRUEBA: Solo se procesarán las primeras 5 fotos ---');
-    }
-
-    const filesToProcess = isTest ? files.slice(0, 5) : files;
+    console.log(`Se encontraron ${files.length} imágenes locales para procesar.`);
 
     let successCount = 0;
     let skipCount = 0;
     let errorCount = 0;
 
-    for (const file of filesToProcess) {
+    for (const file of files) {
         const ext = path.extname(file);
-        const code = path.basename(file, ext).trim();
+        const fileCode = path.basename(file, ext).trim();
+        const cleanFileCode = cleanCode(fileCode);
         const filePath = path.join(FOTO_DIR, file);
 
+        const product = productMap[cleanFileCode];
+
+        if (!product) {
+            // console.log(`[${fileCode}] omitido: No existe ningún producto con este código en la base de datos.`);
+            skipCount++;
+            continue;
+        }
+
         try {
-            // A. Buscar si el producto existe en la DB
-            const { data: product, error: findError } = await supabase
-                .from('products')
-                .select('id, name')
-                .eq('codigo', code)
-                .maybeSingle();
-
-            if (findError) {
-                console.error(`[${code}] Error al buscar en DB: ${findError.message}`);
-                errorCount++;
-                continue;
-            }
-
-            if (!product) {
-                console.log(`[${code}] omitido: No existe ningún producto con este código en la base de datos.`);
-                skipCount++;
-                continue;
-            }
-
-            // B. Subir archivo a Supabase Storage
+            // A. Subir archivo a Supabase Storage
             const fileBuffer = fs.readFileSync(filePath);
             const storagePath = `products/${file}`;
             let mimeType = 'image/jpeg';
@@ -137,33 +145,33 @@ async function main() {
                 });
 
             if (uploadError) {
-                console.error(`[${code}] Error al subir foto: ${uploadError.message}`);
+                console.error(`[${fileCode}] Error al subir foto: ${uploadError.message}`);
                 errorCount++;
                 continue;
             }
 
-            // C. Obtener la URL pública de la foto
+            // B. Obtener la URL pública de la foto
             const { data: { publicUrl } } = supabase.storage
                 .from(BUCKET_NAME)
                 .getPublicUrl(storagePath);
 
-            // D. Actualizar columna 'image' del producto en la DB
+            // C. Actualizar columna 'image' del producto en la DB
             const { error: updateError } = await supabase
                 .from('products')
                 .update({ image: publicUrl })
                 .eq('id', product.id);
 
             if (updateError) {
-                console.error(`[${code}] Error al actualizar producto: ${updateError.message}`);
+                console.error(`[${fileCode}] Error al actualizar producto en DB: ${updateError.message}`);
                 errorCount++;
                 continue;
             }
 
-            console.log(`[OK] ${code} -> ${product.name} (Foto cargada exitosamente)`);
+            console.log(`[OK] ${fileCode} (DB: ${product.codigo}) -> ${product.name}`);
             successCount++;
 
         } catch (err) {
-            console.error(`[${code}] Error inesperado: ${err.message}`);
+            console.error(`[${fileCode}] Error inesperado: ${err.message}`);
             errorCount++;
         }
     }
@@ -172,9 +180,6 @@ async function main() {
     console.log(`Procesadas exitosamente: ${successCount}`);
     console.log(`Omitidas (sin producto en DB): ${skipCount}`);
     console.log(`Errores: ${errorCount}`);
-    if (isTest && files.length > 5) {
-        console.log(`Quedan ${files.length - 5} imágenes sin procesar. Ejecuta el script sin '--test' para procesar todo.`);
-    }
 }
 
 main().catch(err => {
