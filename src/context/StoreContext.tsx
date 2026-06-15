@@ -278,7 +278,7 @@ const StoreContext = createContext<{
 } | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [state, dispatch] = useReducer(storeReducer, {
         isLoading: true,
         products: [],
@@ -326,11 +326,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 // Then try to load private data (orders)
                 try {
-                    const orders = await supabaseService.getOrders();
-                    dispatch({
-                        type: 'SET_ORDERS',
-                        orders: orders || []
-                    });
+                    const isAdmin = window.location.pathname.startsWith('/admin');
+                    if (isAdmin || user?.id) {
+                        const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
+                        dispatch({
+                            type: 'SET_ORDERS',
+                            orders: orders || []
+                        });
+                    } else {
+                        dispatch({
+                            type: 'SET_ORDERS',
+                            orders: []
+                        });
+                    }
                 } catch (orderErr) {
                     console.warn('Could not load orders (Auth might be locked or unauthenticated):', orderErr);
                 }
@@ -358,8 +366,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 console.log('Realtime Order Change:', payload.eventType);
                 // Debounce/Delay fetch slightly to give order_items time to insert if it's a new order
                 setTimeout(async () => {
-                    const orders = await supabaseService.getOrders();
-                    dispatch({ type: 'SET_ORDERS', orders });
+                    const isAdmin = window.location.pathname.startsWith('/admin');
+                    if (isAdmin || user?.id) {
+                        const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
+                        dispatch({ type: 'SET_ORDERS', orders });
+                    } else {
+                        dispatch({ type: 'SET_ORDERS', orders: [] });
+                    }
                 }, 100);
 
                 if (payload.eventType === 'INSERT') {
@@ -377,8 +390,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const itemsChannel = supabase
             .channel('items-realtime')
             .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'order_items' }, async () => {
-                const orders = await supabaseService.getOrders();
-                dispatch({ type: 'SET_ORDERS', orders });
+                const isAdmin = window.location.pathname.startsWith('/admin');
+                if (isAdmin || user?.id) {
+                    const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
+                    dispatch({ type: 'SET_ORDERS', orders });
+                } else {
+                    dispatch({ type: 'SET_ORDERS', orders: [] });
+                }
             })
             .subscribe();
 
@@ -413,7 +431,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             supabase.removeChannel(promoChannel);
             supabase.removeChannel(feesChannel);
         };
-    }, [isAuthenticated]);
+    }, [isAuthenticated, user]);
 
     const addProduct = async (product: Omit<Product, 'id'>) => {
         const data = await supabaseService.addProduct(product);

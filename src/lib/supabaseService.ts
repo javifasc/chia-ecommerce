@@ -98,11 +98,16 @@ export const supabaseService = {
     },
 
     // --- Orders ---
-    async getOrders(): Promise<Order[]> {
-        const { data, error } = await supabase
+    async getOrders(userId?: string): Promise<Order[]> {
+        let query = supabase
             .from('orders')
-            .select('*, order_items(*)')
-            .order('created_at', { ascending: false });
+            .select('*, order_items(*)');
+
+        if (userId) {
+            query = query.eq('user_id', userId);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
 
@@ -128,6 +133,10 @@ export const supabaseService = {
 
     async createOrder(order: Omit<Order, 'id' | 'createdAt'>) {
         const orderId = `#ORD-${Math.floor(Math.random() * 9000) + 1000}`;
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || null;
+
         const { error: orderError } = await supabase
             .from('orders')
             .insert([{
@@ -139,7 +148,8 @@ export const supabaseService = {
                 delivery_method: order.deliveryMethod,
                 delivery_zone: order.deliveryZone,
                 delivery_fee: order.deliveryFee,
-                address: order.address
+                address: order.address,
+                user_id: userId
             }]);
 
         if (orderError) throw orderError;
