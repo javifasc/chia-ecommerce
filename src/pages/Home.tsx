@@ -348,7 +348,21 @@ const Home = () => {
                         <span className="text-xs text-slate-400 font-medium">{filteredProducts.length} productos</span>
                     </div>
 
-                    {filteredProducts.length > 0 ? (
+                    {state.isLoading ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 text-left">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm animate-pulse space-y-3">
+                                    <div className="aspect-square bg-slate-200 dark:bg-slate-700 rounded-xl" />
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+                                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
+                                    <div className="flex justify-between items-center pt-2">
+                                        <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
+                                        <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredProducts.length > 0 ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 text-left">
                             {filteredProducts.map((product: Product) => (
                                 <div key={product.id} className="group relative bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm hover:shadow-md transition-shadow">

@@ -8,12 +8,13 @@ interface WhatsAppMessageData {
     deliveryZone?: string;
     address?: string;
     total: number;
+    deliveryFee?: number;
     items: { name: string; quantity: string; price: number }[];
 }
 
 export const generateWhatsAppLink = (data: WhatsAppMessageData) => {
     const itemsList = data.items
-        .map(item => `• ${item.quantity} x ${item.name} ($${(item.price * parseFloat(item.quantity)).toFixed(2)})`)
+        .map(item => `• ${item.quantity} x ${item.name} ($$${(item.price * parseFloat(item.quantity)).toFixed(2)})`)
         .join('\n');
 
     const message = `🛒 *Nueva Reserva - #CHIA*
@@ -21,7 +22,7 @@ export const generateWhatsAppLink = (data: WhatsAppMessageData) => {
 *Pedido:* #${data.orderId}
 *Cliente:* ${data.customerName}
 *Contacto:* ${data.customerPhone}
-*Entrega:* ${data.deliveryMethod}${data.deliveryMethod === 'Envío' ? ` (${data.deliveryZone})\n*Dirección:* ${data.address}` : ''}
+*Entrega:* ${data.deliveryMethod}${data.deliveryMethod === 'Envío' ? ` (${data.deliveryZone})\n*Dirección:* ${data.address}${data.deliveryFee !== undefined ? `\n*Costo de Envío:* ${data.deliveryFee === 0 ? 'Gratis' : `$${data.deliveryFee.toFixed(2)}`}` : ''}` : ''}
 
 *Detalle:*
 ${itemsList}

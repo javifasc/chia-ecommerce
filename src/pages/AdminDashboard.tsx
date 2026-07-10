@@ -16,7 +16,7 @@ const CHART_COLORS = [
 ];
 
 const AdminDashboard = () => {
-    const { state, updateDeliveryFees } = useStore();
+    const { state, updateDeliveryFees, formatWeight } = useStore();
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('week');
     const [drillCategory, setDrillCategory] = useState<string | null>(null);
     const [suggestionCount, setSuggestionCount] = useState(0);
@@ -126,6 +126,35 @@ const AdminDashboard = () => {
     const lowStockCount = state.products.filter(p => p.availableStock < 5).length;
     const totalProducts = state.products.length;
 
+    const averageTicket = useMemo(() => {
+        return filteredOrders.length > 0 ? (totalSales / filteredOrders.length) : 0;
+    }, [filteredOrders, totalSales]);
+
+    const topSellingProducts = useMemo(() => {
+        const stats: Record<string, { name: string; quantity: number; image?: string; price: number; isFractional?: boolean }> = {};
+        filteredOrders.forEach(order => {
+            order.items.forEach(item => {
+                const product = state.products.find(p => p.id === item.productId);
+                const productName = item.name || product?.name || 'Producto Desconocido';
+                const productPrice = item.price || product?.price || 0;
+                if (!stats[item.productId]) {
+                    stats[item.productId] = {
+                        name: productName,
+                        quantity: 0,
+                        image: product?.image,
+                        price: productPrice,
+                        isFractional: product?.isFractional
+                    };
+                }
+                stats[item.productId].quantity += item.quantity;
+            });
+        });
+        return Object.entries(stats)
+            .map(([id, data]) => ({ id, ...data }))
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 5);
+    }, [filteredOrders, state.products]);
+
     const filterLabels: Record<TimeFilter, string> = { day: 'Hoy', week: 'Semana', month: 'Mes' };
 
     return (
@@ -190,6 +219,22 @@ const AdminDashboard = () => {
                                 <span className="material-symbols-outlined text-[14px] mr-1">trending_up</span>
                                 {filteredOrders.length} pedidos
                             </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+                        <p className="text-slate-500 text-xs font-medium mb-1">Ticket Promedio</p>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-2xl font-bold">${averageTicket.toFixed(2)}</h3>
+                            <span className="material-symbols-outlined text-blue-500">analytics</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+                        <p className="text-slate-500 text-xs font-medium mb-1">Total Productos</p>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-2xl font-bold">{totalProducts}</h3>
+                            <span className="material-symbols-outlined text-green-500">inventory_2</span>
                         </div>
                     </div>
 
@@ -347,6 +392,47 @@ const AdminDashboard = () => {
                         <div className="h-[280px] flex items-center justify-center text-slate-400 text-sm">
                             <span className="material-symbols-outlined mr-2">info</span>
                             Sin datos para este período
+                        </div>
+                    )}
+                </div>
+
+                {/* Ranking de Productos más Vendidos */}
+                <div className="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 text-left">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-lg">Productos más Vendidos</h3>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
+                    </div>
+                    {topSellingProducts.length > 0 ? (
+                        <div className="space-y-3.5">
+                            {topSellingProducts.map((prod, index) => (
+                                <div key={prod.id} className="flex items-center justify-between p-2 rounded-2xl bg-slate-50/50 dark:bg-slate-800/20 border border-slate-100/50 dark:border-slate-800/30">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-400 shrink-0 relative overflow-hidden">
+                                            {prod.image ? (
+                                                <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="material-symbols-outlined text-xl">shopping_bag</span>
+                                            )}
+                                            <div className="absolute top-0 left-0 bg-primary/95 text-slate-900 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-br-lg shadow-sm">
+                                                {index + 1}
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-sm truncate text-slate-900 dark:text-white leading-snug">{prod.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">${prod.price.toFixed(2)} por {prod.isFractional ? 'kg' : 'un.'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="font-black text-sm text-primary-dark dark:text-primary">{formatWeight(prod.quantity, prod.isFractional)}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Facturado: ${(prod.price * prod.quantity).toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-10 text-center text-slate-400 text-sm">
+                            <span className="material-symbols-outlined mb-2 block text-3xl">sentiment_dissatisfied</span>
+                            No hay ventas registradas en este período.
                         </div>
                     )}
                 </div>

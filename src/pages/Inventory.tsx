@@ -18,6 +18,7 @@ const Inventory = () => {
     const [showImport, setShowImport] = useState(false);
     const [importData, setImportData] = useState<ParseResult | null>(null);
     const [isImporting, setIsImporting] = useState(false);
+    const [importProgress, setImportProgress] = useState(0);
     const [importResult, setImportResult] = useState<{ updated: number; created: number; errors: string[] } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,14 +172,20 @@ const Inventory = () => {
     const handleImport = async () => {
         if (!importData) return;
         setIsImporting(true);
+        setImportProgress(0);
         try {
-            const result = await importStockFile(importData.rows.map(r => ({
-                codigo: r.codigo,
-                nombre: r.nombre,
-                familia: r.familia,
-                stock: r.stock,
-                ventaValorizada: r.ventaValorizada
-            })));
+            const result = await importStockFile(
+                importData.rows.map(r => ({
+                    codigo: r.codigo,
+                    nombre: r.nombre,
+                    familia: r.familia,
+                    stock: r.stock,
+                    ventaValorizada: r.ventaValorizada
+                })),
+                (percent) => {
+                    setImportProgress(percent);
+                }
+            );
             setImportResult(result);
             showToast(`Importación completa: ${result.updated} actualizados, ${result.created} nuevos.`, 'success');
         } catch (err: any) {
@@ -189,10 +196,12 @@ const Inventory = () => {
     };
 
     const closeImportModal = () => {
+        if (isImporting) return; // Prevent closing while importing
         setShowImport(false);
         setImportData(null);
         setImportResult(null);
         setIsDragging(false);
+        setImportProgress(0);
     };
 
     return (
@@ -488,7 +497,11 @@ const Inventory = () => {
                                     <p className="text-[11px] text-slate-400 text-left">Desde archivo fiscal (.xlsx)</p>
                                 </div>
                             </div>
-                            <button onClick={closeImportModal} className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600">
+                            <button 
+                                onClick={closeImportModal} 
+                                disabled={isImporting}
+                                className={`w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-opacity ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
                                 <span className="material-symbols-outlined text-lg">close</span>
                             </button>
                         </div>
@@ -530,7 +543,26 @@ const Inventory = () => {
                             {/* Preview */}
                             {importData && !importResult && (
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
+                                    {isImporting ? (
+                                        <div className="flex flex-col items-center justify-center py-10 px-4 space-y-6 animate-in fade-in duration-300">
+                                            <div className="relative flex items-center justify-center">
+                                                <div className="w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-800 border-t-primary animate-spin"></div>
+                                                <span className="absolute text-lg font-black text-slate-800 dark:text-slate-200">{importProgress}%</span>
+                                            </div>
+                                            <div className="text-center space-y-2">
+                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Importando inventario...</p>
+                                                <p className="text-[11px] text-slate-400">Procesando {importProgress}% ({Math.min(Math.round(importData.rows.length * (importProgress / 100)), importData.rows.length)} de {importData.rows.length} productos)</p>
+                                            </div>
+                                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden shadow-inner">
+                                                <div 
+                                                    className="bg-primary h-2 rounded-full transition-all duration-300 ease-out" 
+                                                    style={{ width: `${importProgress}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-bold">{importData.rows.length} productos encontrados</p>
                                             {importData.errors.length > 0 && (
@@ -576,6 +608,8 @@ const Inventory = () => {
                                             </tbody>
                                         </table>
                                     </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 
@@ -624,7 +658,8 @@ const Inventory = () => {
                                 <>
                                     <button
                                         onClick={closeImportModal}
-                                        className="flex-1 py-3 rounded-2xl text-sm font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                                        disabled={isImporting}
+                                        className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all ${isImporting ? 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-slate-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                     >
                                         Cancelar
                                     </button>

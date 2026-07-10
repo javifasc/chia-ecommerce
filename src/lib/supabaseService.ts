@@ -122,7 +122,7 @@ export const supabaseService = {
             deliveryZone: o.delivery_zone,
             deliveryFee: o.delivery_fee,
             address: o.address,
-            items: o.order_items.map((i: any) => ({
+            items: (o.order_items || []).map((i: any) => ({
                 productId: i.product_id,
                 quantity: i.quantity,
                 name: i.name,
@@ -243,72 +243,89 @@ export const supabaseService = {
     },
 
     // --- Bulk Import from XLSX ---
-    async bulkUpsertFromImport(rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]): Promise<{ updated: number; created: number; errors: string[] }> {
+    async bulkUpsertFromImport(
+        rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[],
+        onProgress?: (percent: number) => void
+    ): Promise<{ updated: number; created: number; errors: string[] }> {
         let updated = 0;
         let created = 0;
         const errors: string[] = [];
 
-        for (const row of rows) {
-            try {
-                // Check if product with this codigo already exists
-                const { data: existing } = await supabase
-                    .from('products')
-                    .select('id')
-                    .eq('codigo', row.codigo)
-                    .maybeSingle();
+        try {
+            // 1. Fetch all existing product codigos and IDs in a single query
+            const { data: existingProducts, error: fetchError } = await supabase
+                .from('products')
+                .select('id, codigo');
 
-                if (existing) {
-                    // Calculate category and subcategory
-                    const subcategory = row.familia || 'GENERAL';
-                    const category = findParentCategory(subcategory);
+            if (fetchError) throw fetchError;
 
-                    // UPDATE existing product (price + stock + categorization)
-                    const { error } = await supabase
-                        .from('products')
-                        .update({
-                            price: row.ventaValorizada,
-                            available_stock: row.stock, // stock already parsed as number in xlsxParser
-                            name: row.nombre,
-                            category: category,
-                            subcategory: subcategory
-                        })
-                        .eq('codigo', row.codigo);
-
-                    if (error) {
-                        errors.push(`Error actualizando ${row.codigo}: ${error.message}`);
-                    } else {
-                        updated++;
-                    }
-                } else {
-                    // Calculate category and subcategory
-                    const subcategory = row.familia || 'GENERAL';
-                    const category = findParentCategory(subcategory);
-
-                    // CREATE new product
-                    const { error } = await supabase
-                        .from('products')
-                        .insert([{
-                            codigo: row.codigo,
-                            name: row.nombre,
-                            description: row.nombre,
-                            price: row.ventaValorizada,
-                            category: category,
-                            subcategory: subcategory,
-                            image: '',
-                            unit: 'un.',
-                            available_stock: row.stock,
-                            reserved_stock: 0
-                        }]);
-
-                    if (error) {
-                        errors.push(`Error creando ${row.codigo}: ${error.message}`);
-                    } else {
-                        created++;
-                    }
+            const existingMap = new Map<string, string>();
+            (existingProducts || []).forEach(p => {
+                if (p.codigo) {
+                    existingMap.set(p.codigo.trim(), p.id);
                 }
-            } catch (err: any) {
-                errors.push(`Error en ${row.codigo}: ${err.message}`);
+            });
+
+            // 2. Prepare records for upsert
+            const recordsToUpsert = rows.map(row => {
+                const subcategory = (row.familia || 'GENERAL').trim();
+                const category = findParentCategory(subcategory);
+                const cleanCodigo = (row.codigo || '').trim();
+
+                const existingId = existingMap.get(cleanCodigo);
+
+                if (existingId) {
+                    updated++;
+                    return {
+                        id: existingId,
+                        codigo: cleanCodigo,
+                        name: row.nombre,
+                        price: row.ventaValorizada,
+                        category: category,
+                        subcategory: subcategory,
+                        available_stock: row.stock
+                    };
+                } else {
+                    created++;
+                    return {
+                        codigo: cleanCodigo,
+                        name: row.nombre,
+                        description: row.nombre,
+                        price: row.ventaValorizada,
+                        category: category,
+                        subcategory: subcategory,
+                        image: '',
+                        unit: 'un.',
+                        available_stock: row.stock,
+                        reserved_stock: 0
+                    };
+                }
+            });
+
+            // 3. Perform upsert in batches of 100
+            const batchSize = 100;
+            const totalRecords = recordsToUpsert.length;
+            for (let i = 0; i < totalRecords; i += batchSize) {
+                const batch = recordsToUpsert.slice(i, i + batchSize);
+                const { error: upsertError } = await supabase
+                    .from('products')
+                    .upsert(batch, { onConflict: 'codigo' });
+
+                if (upsertError) {
+                    console.error('Error in batch upsert:', upsertError);
+                    errors.push(`Error en lote ${Math.floor(i / batchSize) + 1}: ${upsertError.message}`);
+                }
+
+                if (onProgress) {
+                    const processed = Math.min(i + batchSize, totalRecords);
+                    const percent = Math.round((processed / totalRecords) * 100);
+                    onProgress(percent);
+                }
             }
+
+        } catch (err: any) {
+            console.error('Bulk import general error:', err);
+            errors.push(`Error general de importación: ${err.message}`);
         }
 
         return { updated, created, errors };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 
@@ -8,11 +8,18 @@ const AdminLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, isAuthenticated, loading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
     const from = location.state?.from?.pathname || '/admin';
+
+    // Auto-redirect if already authenticated and loading is complete
+    useEffect(() => {
+        if (!loading && isAuthenticated) {
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, loading, navigate, from]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,7 +29,7 @@ const AdminLogin = () => {
         const result = await login(email, password);
         
         if (!result.error) {
-            navigate(from, { replace: true });
+            // Let the useEffect handle redirection to prevent race conditions
         } else {
             const errorMessage = result.error.message === 'Invalid login credentials' 
                 ? 'Email o contraseña incorrectos.' 

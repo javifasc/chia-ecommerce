@@ -6,6 +6,9 @@ import autoprefixer from 'autoprefixer'
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [react()],
+    server: {
+        port: 5173,
+    },
     css: {
         postcss: {
             plugins: [

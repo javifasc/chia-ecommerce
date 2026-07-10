@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { supabaseService } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
@@ -272,13 +272,13 @@ const StoreContext = createContext<{
     updatePromotions: (hero?: HeroPromo, featured?: FeaturedPromo) => Promise<void>;
     toggleNewArrival: (productId: string) => Promise<void>;
     markOrdersAsRead: () => void;
-    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => Promise<{ updated: number; created: number; errors: string[] }>;
+    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[], onProgress?: (percent: number) => void) => Promise<{ updated: number; created: number; errors: string[] }>;
     formatWeight: (val: number, isFractional?: boolean) => string;
     refreshProducts: () => Promise<void>;
 } | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, loading: authLoading } = useAuth();
     const [state, dispatch] = useReducer(storeReducer, {
         isLoading: true,
         products: [],
@@ -297,12 +297,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
     });
 
+    const publicDataLoaded = useRef(false);
+
+    // EFFECT 1 - load public data, runs ONCE on mount (not on auth changes)
     useEffect(() => {
-        const loadData = async (retryCount = 0) => {
+        const safetyTimeout = setTimeout(() => {
+            if (!publicDataLoaded.current) {
+                console.warn('Safety timeout reached: forcing isLoading to false.');
+                dispatch({ type: 'SET_LOADING', loading: false });
+            }
+        }, 10000);
+
+        const loadPublicData = async (retryCount = 0) => {
             if (retryCount === 0) dispatch({ type: 'SET_LOADING', loading: true });
 
             try {
-                // First, prioritize public data that doesn't need Auth Lock
                 const [products, fees, promos] = await Promise.all([
                     supabaseService.getProducts(),
                     supabaseService.getDeliveryFees(),
@@ -313,7 +322,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 const cleanFees = { ...fees };
                 delete cleanFees['_FREE_THRESHOLD_'];
 
-                // Update state with public data immediately
                 dispatch({
                     type: 'SET_INITIAL_DATA',
                     data: {
@@ -323,32 +331,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         promotions: promos
                     }
                 });
-
-                // Then try to load private data (orders)
-                try {
-                    const isAdmin = window.location.pathname.startsWith('/admin');
-                    if (isAdmin || user?.id) {
-                        const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
-                        dispatch({
-                            type: 'SET_ORDERS',
-                            orders: orders || []
-                        });
-                    } else {
-                        dispatch({
-                            type: 'SET_ORDERS',
-                            orders: []
-                        });
-                    }
-                } catch (orderErr) {
-                    console.warn('Could not load orders (Auth might be locked or unauthenticated):', orderErr);
-                }
-
+                publicDataLoaded.current = true;
+                clearTimeout(safetyTimeout);
             } catch (error) {
-                console.error(`Error loading Supabase data (Attempt ${retryCount + 1}):`, error);
+                console.error(`Error loading public data (Attempt ${retryCount + 1}):`, error);
                 
-                // If it's a lock error and we haven't retried yet, wait and retry
+                const anyError = error as any;
+                const errorStr = String(anyError && anyError.message || anyError || '').toLowerCase();
+                const isAuthError = (anyError && anyError.status === 401) || 
+                                    errorStr.includes('jwt') || 
+                                    errorStr.includes('token') || 
+                                    errorStr.includes('unauthorized') ||
+                                    errorStr.includes('claims');
+
+                if (isAuthError) {
+                    console.warn('JWT/Auth error detected while loading public data. Clearing session to fallback to anonymous access.');
+                    try {
+                        await supabase.auth.signOut();
+                    } catch (e) {
+                        localStorage.removeItem('chia-auth-token');
+                    }
+                    setTimeout(() => loadPublicData(retryCount + 1), 100);
+                    return;
+                }
+                
                 if (retryCount < 2) {
-                    setTimeout(() => loadData(retryCount + 1), 1000);
+                    setTimeout(() => loadPublicData(retryCount + 1), 1000);
                     return;
                 }
                 
@@ -356,55 +364,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
         };
 
-        loadData();
+        loadPublicData();
 
-        // Subscribe to Realtime Updates
-        // We recreate channels when auth state changes to ensure RLS context is updated
-        const ordersChannel = supabase
-            .channel('orders-realtime')
-            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'orders' }, async (payload: any) => {
-                console.log('Realtime Order Change:', payload.eventType);
-                // Debounce/Delay fetch slightly to give order_items time to insert if it's a new order
-                setTimeout(async () => {
-                    const isAdmin = window.location.pathname.startsWith('/admin');
-                    if (isAdmin || user?.id) {
-                        const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
-                        dispatch({ type: 'SET_ORDERS', orders });
-                    } else {
-                        dispatch({ type: 'SET_ORDERS', orders: [] });
-                    }
-                }, 100);
-
-                if (payload.eventType === 'INSERT') {
-                    dispatch({ type: 'SET_UNREAD_ORDERS', hasUnread: true });
-                    try {
-                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                        audio.play().catch(() => console.log('Sound blocked by browser interaction policy'));
-                    } catch (e) {
-                        console.error('Error playing notification:', e);
-                    }
-                }
-            })
-            .subscribe((status) => console.log('Orders Channel Status:', status));
-
-        const itemsChannel = supabase
-            .channel('items-realtime')
-            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'order_items' }, async () => {
-                const isAdmin = window.location.pathname.startsWith('/admin');
-                if (isAdmin || user?.id) {
-                    const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
-                    dispatch({ type: 'SET_ORDERS', orders });
-                } else {
-                    dispatch({ type: 'SET_ORDERS', orders: [] });
-                }
-            })
-            .subscribe();
-
+        // Channels for public data with debouncing
+        let productsTimeout: NodeJS.Timeout | null = null;
         const productsChannel = supabase
             .channel('products-realtime')
-            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'products' }, async () => {
-                const products = await supabaseService.getProducts();
-                dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'products' }, () => {
+                if (productsTimeout) clearTimeout(productsTimeout);
+                productsTimeout = setTimeout(async () => {
+                    try {
+                        const products = await supabaseService.getProducts();
+                        dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
+                    } catch (err) {
+                        console.error('Error refreshing products in realtime:', err);
+                    }
+                }, 1000); // 1-second debounce to handle bulk imports smoothly
             })
             .subscribe();
 
@@ -425,13 +400,84 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .subscribe();
 
         return () => {
-            supabase.removeChannel(ordersChannel);
-            supabase.removeChannel(itemsChannel);
+            clearTimeout(safetyTimeout);
             supabase.removeChannel(productsChannel);
             supabase.removeChannel(promoChannel);
             supabase.removeChannel(feesChannel);
         };
-    }, [isAuthenticated, user]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // EFFECT 2 - load orders, runs when auth changes
+    useEffect(() => {
+        if (authLoading) return;
+
+        const loadOrders = async () => {
+            try {
+                const isAdmin = window.location.pathname.startsWith('/admin');
+                if (isAdmin || user?.id) {
+                    const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
+                    dispatch({
+                        type: 'SET_ORDERS',
+                        orders: orders || []
+                    });
+                } else {
+                    dispatch({
+                        type: 'SET_ORDERS',
+                        orders: []
+                    });
+                }
+            } catch (orderErr) {
+                console.warn('Could not load orders:', orderErr);
+            }
+        };
+
+        loadOrders();
+
+        // Subscribe to orders/items realtime updates
+        const ordersChannel = supabase
+            .channel('orders-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'orders' }, async (payload: any) => {
+                console.log('Realtime Order Change:', payload.eventType);
+                setTimeout(async () => {
+                    const isAdmin = window.location.pathname.startsWith('/admin');
+                    if (isAdmin || user?.id) {
+                        const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
+                        dispatch({ type: 'SET_ORDERS', orders });
+                    } else {
+                        dispatch({ type: 'SET_ORDERS', orders: [] });
+                    }
+                }, 100);
+
+                if (payload.eventType === 'INSERT') {
+                    dispatch({ type: 'SET_UNREAD_ORDERS', hasUnread: true });
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                        audio.play().catch(() => console.log('Sound blocked by browser interaction policy'));
+                    } catch (e) {
+                        console.error('Error playing notification:', e);
+                    }
+                }
+            })
+            .subscribe();
+
+        const itemsChannel = supabase
+            .channel('items-realtime')
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'order_items' }, async () => {
+                const isAdmin = window.location.pathname.startsWith('/admin');
+                if (isAdmin || user?.id) {
+                    const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
+                    dispatch({ type: 'SET_ORDERS', orders });
+                } else {
+                    dispatch({ type: 'SET_ORDERS', orders: [] });
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(ordersChannel);
+            supabase.removeChannel(itemsChannel);
+        };
+    }, [authLoading, isAuthenticated, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const addProduct = async (product: Omit<Product, 'id'>) => {
         const data = await supabaseService.addProduct(product);
@@ -528,9 +574,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
 
         const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-        const tax = subtotal * 0.05;
         const deliveryFee = orderData.deliveryFee || 0;
-        const total = subtotal + tax + deliveryFee;
+        const total = subtotal + deliveryFee;
 
         const orderId = await supabaseService.createOrder({
             ...orderData,
@@ -552,8 +597,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return orderId;
     };
 
-    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => {
-        const result = await supabaseService.bulkUpsertFromImport(rows);
+    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[], onProgress?: (percent: number) => void) => {
+        const result = await supabaseService.bulkUpsertFromImport(rows, onProgress);
         // Refresh products after import
         const products = await supabaseService.getProducts();
         dispatch({ type: 'SET_INITIAL_DATA', data: { products } });

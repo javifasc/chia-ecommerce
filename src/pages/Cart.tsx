@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
@@ -18,6 +18,7 @@ const Cart = () => {
     const [lastOrderId, setLastOrderId] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState<'Retiro' | 'Envío'>('Retiro');
     const [address, setAddress] = useState(profile?.address || '');
+    const [deliveryZone, setDeliveryZone] = useState<string>('Rada Tilly');
     const [lastOrderSummary, setLastOrderSummary] = useState<{ items: any[], total: number } | null>(null);
 
     // Sync profile data when it loads
@@ -38,7 +39,12 @@ const Cart = () => {
 
     // Lógica de Envío Gratis
     const isFreeShipping = state.freeShippingThreshold > 0 && subtotal >= state.freeShippingThreshold;
-    const total = subtotal;
+    const deliveryFee = useMemo(() => {
+        if (deliveryMethod !== 'Envío') return 0;
+        if (deliveryZone === 'Rada Tilly' && isFreeShipping) return 0;
+        return state.deliveryFees[deliveryZone] || 0;
+    }, [deliveryMethod, deliveryZone, isFreeShipping, state.deliveryFees]);
+    const total = subtotal + deliveryFee;
     const priceWithoutNationalTaxes = total * 0.895; // Restamos el 10.5%
 
     const handleAddToCart = (productId: string) => {
@@ -74,8 +80,8 @@ const Cart = () => {
                 customerName,
                 customerPhone,
                 deliveryMethod,
-                deliveryZone: deliveryMethod === 'Envío' ? 'Rada Tilly' : undefined,
-                deliveryFee: 0,
+                deliveryZone: deliveryMethod === 'Envío' ? deliveryZone : undefined,
+                deliveryFee: deliveryFee,
                 address: deliveryMethod === 'Envío' ? address : undefined
             });
 
@@ -89,7 +95,7 @@ const Cart = () => {
                 customerName,
                 customerPhone,
                 deliveryMethod,
-                deliveryZone: deliveryMethod === 'Envío' ? 'Rada Tilly' : undefined,
+                deliveryZone: deliveryMethod === 'Envío' ? deliveryZone : undefined,
                 address,
                 total: orderSummary.total,
                 items: orderSummary.items
@@ -106,9 +112,10 @@ const Cart = () => {
             customerName,
             customerPhone,
             deliveryMethod,
-            deliveryZone: deliveryMethod === 'Envío' ? 'Rada Tilly' : undefined,
+            deliveryZone: deliveryMethod === 'Envío' ? deliveryZone : undefined,
             address,
             total: lastOrderSummary.total,
+            deliveryFee: deliveryMethod === 'Envío' ? deliveryFee : undefined,
             items: lastOrderSummary.items
         }) : '#';
 
@@ -211,17 +218,11 @@ const Cart = () => {
                                 Retiro en Local
                             </button>
                             <button
-                                onClick={() => isFreeShipping && setDeliveryMethod('Envío')}
-                                disabled={!isFreeShipping}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all relative overflow-hidden ${deliveryMethod === 'Envío' ? 'bg-white dark:bg-slate-700 shadow-md text-primary-dark dark:text-primary scale-[1.02]' : 'text-slate-400'} ${!isFreeShipping ? 'opacity-50 cursor-not-allowed grayscale-[0.5]' : ''}`}
+                                onClick={() => setDeliveryMethod('Envío')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all relative overflow-hidden ${deliveryMethod === 'Envío' ? 'bg-white dark:bg-slate-700 shadow-md text-primary-dark dark:text-primary scale-[1.02]' : 'text-slate-400'}`}
                             >
                                 <span className="material-symbols-outlined text-lg">local_shipping</span>
                                 Envío a Domicilio
-                                {!isFreeShipping && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/5 backdrop-blur-[1px]">
-                                        <span className="material-symbols-outlined text-xs">lock</span>
-                                    </div>
-                                )}
                             </button>
                         </div>
 
@@ -290,20 +291,37 @@ const Cart = () => {
                                 />
                                 {deliveryMethod === 'Envío' && (
                                     <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <div className="w-full bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 flex items-center gap-3">
-                                            <span className="material-symbols-outlined text-primary-dark">room</span>
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-primary-dark opacity-70">Zona de Envío</p>
-                                                <p className="text-sm font-bold text-slate-900 dark:text-white">Rada Tilly (Envío Bonificado)</p>
+                                        <div className="relative">
+                                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Zona de Envío</label>
+                                            <select
+                                                value={deliveryZone}
+                                                onChange={(e) => setDeliveryZone(e.target.value)}
+                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-10 text-sm focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer appearance-none"
+                                            >
+                                                {Object.keys(state.deliveryFees).map((zone) => {
+                                                    const fee = state.deliveryFees[zone];
+                                                    const isRadaTillyFree = zone === 'Rada Tilly' && isFreeShipping;
+                                                    return (
+                                                        <option key={zone} value={zone}>
+                                                            {zone} ({isRadaTillyFree ? 'Envío Gratis' : `$${fee}`})
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
+                                            <div className="pointer-events-none absolute right-4 top-[38px] text-slate-400">
+                                                <span className="material-symbols-outlined text-sm">keyboard_arrow_down</span>
                                             </div>
                                         </div>
-                                        <input
-                                            type="text"
-                                            placeholder="Dirección exacta (Calle, número, depto)"
-                                            value={address}
-                                            onChange={(e) => setAddress(e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none text-sm transition-all"
-                                        />
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Dirección Exacta</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Dirección exacta (Calle, número, depto)"
+                                                value={address}
+                                                onChange={(e) => setAddress(e.target.value)}
+                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none text-sm transition-all"
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -313,8 +331,10 @@ const Cart = () => {
                             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4">Resumen del Pedido</h2>
                             {deliveryMethod === 'Envío' && (
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-slate-600 dark:text-slate-400 font-bold text-sm">Envío (Rada Tilly)</span>
-                                    <span className="text-primary font-bold text-sm italic">GRATIS</span>
+                                    <span className="text-slate-600 dark:text-slate-400 font-bold text-sm">Envío ({deliveryZone})</span>
+                                    <span className={`font-bold text-sm ${deliveryFee === 0 ? 'text-primary italic' : 'text-slate-900 dark:text-white'}`}>
+                                        {deliveryFee === 0 ? 'GRATIS' : `$\${deliveryFee.toFixed(2)}`}
+                                    </span>
                                 </div>
                             )}
                             <div className="flex justify-between items-center pt-4 border-t border-dashed border-slate-300 dark:border-slate-600">

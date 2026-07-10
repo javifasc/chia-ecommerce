@@ -232,7 +232,21 @@ const Catalog = () => {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filteredProducts.length} items</span>
                     </div>
 
-                    {filteredProducts.length > 0 ? (
+                    {state.isLoading ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="bg-white dark:bg-slate-800 p-3 rounded-3xl shadow-sm border border-slate-50 dark:border-slate-700 animate-pulse space-y-3">
+                                    <div className="aspect-square bg-slate-200 dark:bg-slate-700 rounded-2xl" />
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+                                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
+                                    <div className="flex justify-between items-center pt-2">
+                                        <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
+                                        <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredProducts.length > 0 ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                             {filteredProducts.map((p: Product) => (
                                 <div key={p.id} className="bg-white dark:bg-slate-800 rounded-3xl p-3 shadow-sm border border-slate-50 dark:border-slate-700 relative group text-left">
