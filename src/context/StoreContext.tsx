@@ -346,14 +346,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 if (isAuthError) {
                     console.warn('JWT/Auth error detected while loading public data. Clearing session to fallback to anonymous access.');
-                    try {
-                        await supabase.auth.signOut();
-                    } catch (e) {
-                        localStorage.removeItem('chia-auth-token');
-                    }
-                    setTimeout(() => loadPublicData(retryCount + 1), 100);
-                    return;
-                }
+                    try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+localStorage.removeItem('chia-auth-token');
+localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
+                    if (retryCount < 3) { setTimeout(() => loadPublicData(retryCount + 1), 100); return; } }
                 
                 if (retryCount < 2) {
                     setTimeout(() => loadPublicData(retryCount + 1), 1000);
