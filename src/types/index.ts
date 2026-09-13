@@ -60,6 +60,11 @@ export type HeroPromo = {
     buttonText: string;
 };
 
+/** Publicaciones de Instagram elegidas desde el panel. */
+export type InstagramPromo = {
+    posts: string[];
+};
+
 export type FeaturedPromo = {
     sectionTitle: string;
     itemTitle: string;

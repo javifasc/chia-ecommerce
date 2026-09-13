@@ -1,8 +1,15 @@
 import { useState, useRef } from 'react';
-import { useStore, HeroPromo, FeaturedPromo } from '../context/StoreContext';
+import { useStore, HeroPromo, FeaturedPromo, InstagramPromo } from '../context/StoreContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { fileToBase64 } from '../utils/imageUtils';
 import { useNotifications } from '../context/NotificationContext';
+import {
+    DEFAULT_INSTAGRAM_POSTS,
+    MAX_INSTAGRAM_POSTS,
+    describeInstagramLinkProblem,
+    parseInstagramPostCode,
+} from '../utils/instagramPosts';
+import { InstagramIcon } from '../components/BrandIcons';
 
 const AdminPromotions = () => {
     const { state, updatePromotions } = useStore();
@@ -27,6 +34,31 @@ const AdminPromotions = () => {
     const [featPrice, setFeatPrice] = useState(state.promotions.featured.price.toString());
     const [featOldPrice, setFeatOldPrice] = useState(state.promotions.featured.oldPrice.toString());
 
+    // Instagram: se guardan los códigos, pero el dueño pega el link completo.
+    // Mantenemos el texto tal cual lo pegó para no borrarle lo que escribió
+    // si todavía no es un link válido.
+    const savedInstagram = state.promotions.instagram?.posts ?? [];
+    const [instagramLinks, setInstagramLinks] = useState<string[]>(
+        (savedInstagram.length > 0 ? savedInstagram : DEFAULT_INSTAGRAM_POSTS)
+            .map(code => `https://www.instagram.com/p/${code}/`)
+    );
+
+    const instagramCodes = instagramLinks.map(parseInstagramPostCode);
+    const validInstagramCodes = instagramCodes.filter((c): c is string => c !== null);
+    const hasInvalidLink = instagramLinks.some((link, i) => link.trim() !== '' && instagramCodes[i] === null);
+
+    const updateInstagramLink = (index: number, value: string) => {
+        setInstagramLinks(links => links.map((link, i) => (i === index ? value : link)));
+    };
+
+    const addInstagramLink = () => {
+        setInstagramLinks(links => (links.length >= MAX_INSTAGRAM_POSTS ? links : [...links, '']));
+    };
+
+    const removeInstagramLink = (index: number) => {
+        setInstagramLinks(links => links.filter((_, i) => i !== index));
+    };
+
     const handleSavePromos = async () => {
         const hero: HeroPromo = {
             tag: heroTag,
@@ -45,8 +77,15 @@ const AdminPromotions = () => {
             oldPrice: parseFloat(featOldPrice)
         };
 
+        if (hasInvalidLink) {
+            showToast('Hay un link de Instagram que no se entiende. Revisalo o borralo.', 'warning');
+            return;
+        }
+
+        const instagram: InstagramPromo = { posts: validInstagramCodes };
+
         try {
-            await updatePromotions(hero, featured);
+            await updatePromotions(hero, featured, instagram);
             showToast('Promociones actualizadas con éxito.', 'success');
             navigate('/admin');
         } catch (error) {
@@ -232,6 +271,91 @@ const AdminPromotions = () => {
                                 <input type="number" value={featOldPrice} onChange={(e) => setFeatOldPrice(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" />
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                {/* Instagram */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <InstagramIcon className="w-5 h-5 text-primary" />
+                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                            Publicaciones de Instagram
+                        </h2>
+                    </div>
+
+                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3.5">
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Se muestran en la página de inicio, en la sección{' '}
+                            <span className="font-bold">"Lo último del local"</span>. Abrí la publicación
+                            en Instagram, tocá <span className="font-bold">Compartir → Copiar enlace</span> y
+                            pegalo acá. Sirven posts y reels.
+                        </p>
+                    </div>
+
+                    <div className="space-y-3 bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                        {instagramLinks.length === 0 && (
+                            <p className="text-xs text-slate-400 text-center py-4">
+                                No hay publicaciones. La sección no se va a mostrar.
+                            </p>
+                        )}
+
+                        {instagramLinks.map((link, i) => {
+                            const code = instagramCodes[i];
+                            const isEmpty = link.trim() === '';
+                            const isInvalid = !isEmpty && code === null;
+
+                            return (
+                                <div key={i} className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase">
+                                            Publicación {i + 1}
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeInstagramLink(i)}
+                                            aria-label={`Quitar publicación ${i + 1}`}
+                                            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-red-500 px-2 py-1 rounded-lg transition-colors"
+                                        >
+                                            <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
+                                            Quitar
+                                        </button>
+                                    </div>
+                                    <input
+                                        value={link}
+                                        onChange={(e) => updateInstagramLink(i, e.target.value)}
+                                        placeholder="https://www.instagram.com/p/..."
+                                        className={`w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 transition-shadow ${isInvalid ? 'ring-2 ring-red-400 focus:ring-red-400' : 'focus:ring-primary'
+                                            }`}
+                                    />
+                                    {isInvalid ? (
+                                        <p className="text-[11px] font-semibold text-red-500 flex items-start gap-1 leading-relaxed">
+                                            <span aria-hidden="true" className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '13px' }}>error</span>
+                                            {describeInstagramLinkProblem(link)}
+                                        </p>
+                                    ) : code ? (
+                                        <p className="text-[11px] font-semibold text-primary-dark dark:text-primary flex items-center gap-1">
+                                            <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '13px' }}>check_circle</span>
+                                            Listo ({code})
+                                        </p>
+                                    ) : null}
+                                </div>
+                            );
+                        })}
+
+                        {instagramLinks.length < MAX_INSTAGRAM_POSTS && (
+                            <button
+                                type="button"
+                                onClick={addInstagramLink}
+                                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:border-primary hover:text-primary-dark dark:hover:text-primary transition-colors"
+                            >
+                                <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+                                Agregar publicación
+                            </button>
+                        )}
+
+                        <p className="text-[11px] text-slate-400 pt-1">
+                            {validInstagramCodes.length} de {MAX_INSTAGRAM_POSTS} publicaciones. Se muestran en este orden.
+                        </p>
                     </div>
                 </section>
 

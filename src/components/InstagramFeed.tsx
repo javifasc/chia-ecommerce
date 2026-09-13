@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { INSTAGRAM_POSTS } from '../utils/instagramPosts';
+import { DEFAULT_INSTAGRAM_POSTS } from '../utils/instagramPosts';
+import { useStore } from '../context/StoreContext';
 import { INSTAGRAM_URL, INSTAGRAM_USER } from '../utils/contact';
 import { InstagramIcon } from './BrandIcons';
 
@@ -20,6 +21,13 @@ const FALLBACK_HEIGHT = 640;
  *    aplicamos, en lugar de cargar el embed.js de Instagram.
  */
 const InstagramFeed = () => {
+    const { state } = useStore();
+
+    // Las que se hayan elegido en el panel; si todavía no hay ninguna,
+    // las del código, para que la sección nunca quede vacía.
+    const saved = state.promotions.instagram?.posts ?? [];
+    const posts = saved.length > 0 ? saved : DEFAULT_INSTAGRAM_POSTS;
+
     const sectionRef = useRef<HTMLElement>(null);
     const frameRefs = useRef<(HTMLIFrameElement | null)[]>([]);
     const [shouldLoad, setShouldLoad] = useState(false);
@@ -83,7 +91,7 @@ const InstagramFeed = () => {
         []
     );
 
-    if (INSTAGRAM_POSTS.length === 0) return null;
+    if (posts.length === 0) return null;
 
     return (
         <section ref={sectionRef} className="py-24 sm:py-32 bg-slate-50 dark:bg-slate-900/50">
@@ -109,7 +117,7 @@ const InstagramFeed = () => {
                 {/* En móvil, tres publicaciones apiladas son más de 2000px de scroll:
                     se recorren de costado con swipe. Desde sm vuelve a ser grilla. */}
                 <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory -mx-6 px-6 sm:mx-0 sm:px-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 sm:items-start">
-                    {INSTAGRAM_POSTS.map((code, i) => (
+                    {posts.map((code: string, i: number) => (
                         <div
                             key={code}
                             style={{ height: heights[i] ?? FALLBACK_HEIGHT }}
@@ -136,7 +144,7 @@ const InstagramFeed = () => {
                     ))}
                 </div>
 
-                {INSTAGRAM_POSTS.length > 1 && (
+                {posts.length > 1 && (
                     <p className="sm:hidden text-center text-xs text-slate-400 mt-4">
                         Deslizá para ver más →
                     </p>

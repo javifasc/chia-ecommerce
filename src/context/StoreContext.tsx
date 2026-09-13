@@ -11,10 +11,12 @@ import {
     OrderStatus,
     Order,
     HeroPromo,
-    FeaturedPromo
+    FeaturedPromo,
+    InstagramPromo
 } from '../types';
 
 export type {
+    InstagramPromo,
     Product,
     CartItem,
     OrderStatus,
@@ -33,6 +35,7 @@ export type State = {
     promotions: {
         hero: HeroPromo;
         featured: FeaturedPromo;
+        instagram: InstagramPromo;
     };
     deliveryFees: {
         [key: string]: number;
@@ -57,7 +60,7 @@ type Action =
     | { type: 'EDIT_PRODUCT'; product: Product }
     | { type: 'DELETE_PRODUCT'; productId: string }
     | { type: 'SET_ORDERS'; orders: Order[] }
-    | { type: 'SET_PROMOTIONS'; promotions: { hero: HeroPromo; featured: FeaturedPromo } }
+    | { type: 'SET_PROMOTIONS'; promotions: { hero: HeroPromo; featured: FeaturedPromo; instagram: InstagramPromo } }
     | { type: 'SET_UNREAD_ORDERS'; hasUnread: boolean }
     | { type: 'PLACE_ORDER_LOCAL'; order: Order };
 
@@ -78,6 +81,11 @@ const INITIAL_PROMOTIONS = {
         itemImage: 'https://images.unsplash.com/photo-1544306094-e2dca9f57142?q=80&w=600&auto=format&fit=crop',
         price: 35.00,
         oldPrice: 45.00
+    },
+    instagram: {
+        // Vacío = la landing usa DEFAULT_INSTAGRAM_POSTS hasta que se
+        // guarden publicaciones desde el panel.
+        posts: [] as string[]
     }
 };
 
@@ -302,7 +310,7 @@ const StoreContext = createContext<{
     placeOrder: (data: any) => Promise<string>;
     updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
     updateDeliveryFees: (fees: Record<string, number>) => Promise<void>;
-    updatePromotions: (hero?: HeroPromo, featured?: FeaturedPromo) => Promise<void>;
+    updatePromotions: (hero?: HeroPromo, featured?: FeaturedPromo, instagram?: InstagramPromo) => Promise<void>;
     toggleNewArrival: (productId: string) => Promise<void>;
     markOrdersAsRead: () => void;
     importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[], onProgress?: (percent: number) => void) => Promise<{ updated: number; created: number; errors: string[] }>;
@@ -584,13 +592,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await supabaseService.updateDeliveryFees(fees);
     };
 
-    const updatePromotions = async (hero?: HeroPromo, featured?: FeaturedPromo) => {
-        await supabaseService.updatePromotions(hero, featured);
+    const updatePromotions = async (hero?: HeroPromo, featured?: FeaturedPromo, instagram?: InstagramPromo) => {
+        await supabaseService.updatePromotions(hero, featured, instagram);
         dispatch({
             type: 'SET_PROMOTIONS',
             promotions: {
                 hero: hero || state.promotions.hero,
-                featured: featured || state.promotions.featured
+                featured: featured || state.promotions.featured,
+                instagram: instagram || state.promotions.instagram
             }
         });
     };

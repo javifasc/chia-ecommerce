@@ -1,5 +1,5 @@
 import { supabase, supabasePublic } from './supabaseClient';
-import { Product, Order, HeroPromo, FeaturedPromo, ProductSuggestion } from '../types';
+import { Product, Order, HeroPromo, FeaturedPromo, InstagramPromo, ProductSuggestion } from '../types';
 import { findParentCategory } from '../utils/categoryMapping';
 
 export const supabaseService = {
@@ -198,23 +198,34 @@ export const supabaseService = {
 
     // --- Promotions ---
     // Lectura pública: ver nota en getProducts.
-    async getPromotions(): Promise<{ hero: HeroPromo; featured: FeaturedPromo }> {
+    async getPromotions(): Promise<{ hero: HeroPromo; featured: FeaturedPromo; instagram: InstagramPromo }> {
         const { data, error } = await supabasePublic.from('promotions').select('*');
         if (error) throw error;
 
         const hero = data?.find(p => p.id === 'hero')?.data || {};
         const featured = data?.find(p => p.id === 'featured')?.data || {};
 
-        return { hero, featured };
+        // La fila 'instagram' puede no existir todavía: se crea al guardar
+        // por primera vez desde el panel, sin migración de esquema.
+        const savedPosts = data?.find(p => p.id === 'instagram')?.data?.posts;
+        const instagram: InstagramPromo = {
+            posts: Array.isArray(savedPosts) ? savedPosts.filter((c: unknown) => typeof c === 'string') : [],
+        };
+
+        return { hero, featured, instagram };
     },
 
-    async updatePromotions(hero?: HeroPromo, featured?: FeaturedPromo) {
+    async updatePromotions(hero?: HeroPromo, featured?: FeaturedPromo, instagram?: InstagramPromo) {
         if (hero) {
             const { error } = await supabase.from('promotions').upsert({ id: 'hero', data: hero });
             if (error) throw error;
         }
         if (featured) {
             const { error } = await supabase.from('promotions').upsert({ id: 'featured', data: featured });
+            if (error) throw error;
+        }
+        if (instagram) {
+            const { error } = await supabase.from('promotions').upsert({ id: 'instagram', data: instagram });
             if (error) throw error;
         }
     },
