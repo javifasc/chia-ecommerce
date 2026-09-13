@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { InstagramIcon, WhatsAppIcon } from '../components/BrandIcons';
+import InstagramFeed from '../components/InstagramFeed';
 import { INSTAGRAM_URL, INSTAGRAM_USER, MAPS_URL, WHATSAPP_URL, CITY } from '../utils/contact';
 
 const LandingPage = () => {
@@ -219,6 +220,9 @@ const LandingPage = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Instagram */}
+            <InstagramFeed />
 
             {/* CTA Final */}
             <section className="py-24">
