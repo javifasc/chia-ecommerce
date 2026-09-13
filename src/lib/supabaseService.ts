@@ -1,11 +1,12 @@
-import { supabase } from './supabaseClient';
+import { supabase, supabasePublic } from './supabaseClient';
 import { Product, Order, HeroPromo, FeaturedPromo, ProductSuggestion } from '../types';
 import { findParentCategory } from '../utils/categoryMapping';
 
 export const supabaseService = {
     // --- Products ---
+    // Lectura pública: usa supabasePublic para que una sesión vencida nunca bloquee el catálogo.
     async getProducts(): Promise<Product[]> {
-        const { data, error } = await supabase
+        const { data, error } = await supabasePublic
             .from('products')
             .select('*')
             .order('created_at', { ascending: false });
@@ -205,8 +206,9 @@ export const supabaseService = {
     },
 
     // --- Delivery Fees ---
+    // Lectura pública: ver nota en getProducts.
     async getDeliveryFees(): Promise<Record<string, number>> {
-        const { data, error } = await supabase.from('delivery_fees').select('*');
+        const { data, error } = await supabasePublic.from('delivery_fees').select('*');
         if (error) throw error;
 
         const fees: Record<string, number> = {};
@@ -221,8 +223,9 @@ export const supabaseService = {
     },
 
     // --- Promotions ---
+    // Lectura pública: ver nota en getProducts.
     async getPromotions(): Promise<{ hero: HeroPromo; featured: FeaturedPromo }> {
-        const { data, error } = await supabase.from('promotions').select('*');
+        const { data, error } = await supabasePublic.from('promotions').select('*');
         if (error) throw error;
 
         const hero = data?.find(p => p.id === 'hero')?.data || {};

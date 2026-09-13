@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { supabase, isAuthTokenError, purgeStaleSession } from '../lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
 export type ProfileData = {
@@ -32,6 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
 
+    // Se limpia la sesión corrupta como mucho una vez por montaje.
+    const sessionPurged = useRef(false);
+
     const fetchProfile = async (userId: string) => {
         try {
             const { data, error } = await supabase
@@ -45,6 +48,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (error) {
             console.error('Error fetching profile:', error);
             setProfile(null);
+
+            // Esta consulta es el canario de la sesión: es la primera que viaja con el JWT
+            // del usuario. Si el servidor no lo puede validar (vencido, o firmado con una
+            // clave que ya rotó), la sesión guardada quedó inservible y envenenaría todos
+            // los pedidos siguientes. La limpiamos para que la app siga andando como
+            // anónima, sin que el usuario tenga que borrar cookies a mano.
+            if (!sessionPurged.current && isAuthTokenError(error)) {
+                sessionPurged.current = true;
+                console.warn('Sesión inválida detectada al leer el perfil. Limpiando storage.');
+                await purgeStaleSession();
+            }
         }
     };
 
@@ -57,21 +71,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }, 5000);
 
         // Listen for changes on auth state (includes initial session)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (!mounted) return;
 
             const currentUser = session?.user ?? null;
             setUser(currentUser);
             setIsAuthenticated(!!session);
-            
-            if (currentUser) {
-                await fetchProfile(currentUser.id);
-            } else {
-                setProfile(null);
-            }
-            
             setLoading(false);
             clearTimeout(timeout);
+
+            if (!currentUser) {
+                setProfile(null);
+                return;
+            }
+
+            // Supabase ejecuta este callback con el lock de auth tomado y espera a que
+            // termine. Llamar a la API de Supabase acá adentro serializa (y puede trabar)
+            // todo el sistema de auth, así que el perfil se pide fuera del callback.
+            setTimeout(() => {
+                if (mounted) fetchProfile(currentUser.id);
+            }, 0);
         });
 
         return () => {

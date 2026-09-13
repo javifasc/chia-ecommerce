@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { supabaseService } from '../lib/supabaseService';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabasePublic, isAuthTokenError, purgeStaleSession } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 
 // --- Types ---
@@ -308,6 +308,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
         }, 10000);
 
+        // Se limpia la sesión corrupta como mucho una vez por montaje, sin importar el reintento.
+        let sessionPurged = false;
+
         const loadPublicData = async (retryCount = 0) => {
             if (retryCount === 0) dispatch({ type: 'SET_LOADING', loading: true });
 
@@ -335,27 +338,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 clearTimeout(safetyTimeout);
             } catch (error) {
                 console.error(`Error loading public data (Attempt ${retryCount + 1}):`, error);
-                
-                const anyError = error as any;
-                const errorStr = String(anyError && anyError.message || anyError || '').toLowerCase();
-                const isAuthError = (anyError && anyError.status === 401) || 
-                                    errorStr.includes('jwt') || 
-                                    errorStr.includes('token') || 
-                                    errorStr.includes('unauthorized') ||
-                                    errorStr.includes('claims');
 
-                if (isAuthError) {
-                    console.warn('JWT/Auth error detected while loading public data. Clearing session to fallback to anonymous access.');
-                    try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
-localStorage.removeItem('chia-auth-token');
-localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
-                    if (retryCount < 3) { setTimeout(() => loadPublicData(retryCount + 1), 100); return; } }
-                
+                // Los datos públicos ya viajan con la anon key (supabasePublic), así que un error
+                // de token acá significa que quedó una sesión corrupta en el storage rompiendo el
+                // resto de la app. La limpiamos una sola vez y reintentamos como anónimos.
+                if (!sessionPurged && isAuthTokenError(error)) {
+                    sessionPurged = true;
+                    console.warn('Sesión inválida detectada. Limpiando storage para volver a modo anónimo.');
+                    await purgeStaleSession();
+                    setTimeout(() => loadPublicData(retryCount + 1), 100);
+                    return;
+                }
+
                 if (retryCount < 2) {
                     setTimeout(() => loadPublicData(retryCount + 1), 1000);
                     return;
                 }
-                
+
                 dispatch({ type: 'SET_LOADING', loading: false });
             }
         };
@@ -364,7 +363,7 @@ localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
 
         // Channels for public data with debouncing
         let productsTimeout: NodeJS.Timeout | null = null;
-        const productsChannel = supabase
+        const productsChannel = supabasePublic
             .channel('products-realtime')
             .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'products' }, () => {
                 if (productsTimeout) clearTimeout(productsTimeout);
@@ -379,7 +378,7 @@ localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
             })
             .subscribe();
 
-        const promoChannel = supabase
+        const promoChannel = supabasePublic
             .channel('promos-realtime')
             .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'promotions' }, async () => {
                 const promos = await supabaseService.getPromotions();
@@ -387,7 +386,7 @@ localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
             })
             .subscribe();
 
-        const feesChannel = supabase
+        const feesChannel = supabasePublic
             .channel('fees-realtime')
             .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'delivery_fees' }, async () => {
                 const fees = await supabaseService.getDeliveryFees();
@@ -397,9 +396,9 @@ localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
 
         return () => {
             clearTimeout(safetyTimeout);
-            supabase.removeChannel(productsChannel);
-            supabase.removeChannel(promoChannel);
-            supabase.removeChannel(feesChannel);
+            supabasePublic.removeChannel(productsChannel);
+            supabasePublic.removeChannel(promoChannel);
+            supabasePublic.removeChannel(feesChannel);
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -428,6 +427,11 @@ localStorage.removeItem('sb-svglxzzykisleijrddjl-auth-token');
         };
 
         loadOrders();
+
+        // Los canales de pedidos solo le sirven al admin o a un usuario logueado. Sin este
+        // filtro un visitante anónimo abría un websocket extra que nunca usaba.
+        const needsOrderUpdates = window.location.pathname.startsWith('/admin') || !!user?.id;
+        if (!needsOrderUpdates) return;
 
         // Subscribe to orders/items realtime updates
         const ordersChannel = supabase
