@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { InstagramIcon, WhatsAppIcon } from '../components/BrandIcons';
+import { INSTAGRAM_URL, INSTAGRAM_USER, MAPS_URL, WHATSAPP_URL, CITY } from '../utils/contact';
 import BottomNav from '../components/BottomNav';
 import { useAuth, ProfileData } from '../context/AuthContext';
 import { useStore, Product } from '../context/StoreContext';
@@ -276,6 +278,44 @@ const Profile = () => {
                         </section>
                     )}
                 </div>
+
+                {/* Contacto del local */}
+                <section className="pt-8">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Seguinos y visitanos</h2>
+                    <div className="grid grid-cols-3 gap-2.5">
+                        <a
+                            href={INSTAGRAM_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Seguinos en Instagram, @${INSTAGRAM_USER}`}
+                            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
+                        >
+                            <InstagramIcon />
+                            <span className="text-[11px] font-semibold">Instagram</span>
+                        </a>
+                        <a
+                            href={WHATSAPP_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Escribinos por WhatsApp"
+                            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
+                        >
+                            <WhatsAppIcon />
+                            <span className="text-[11px] font-semibold">WhatsApp</span>
+                        </a>
+                        <a
+                            href={MAPS_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Ver la ubicación del local en Google Maps"
+                            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
+                        >
+                            <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '20px' }}>location_on</span>
+                            <span className="text-[11px] font-semibold">Cómo llegar</span>
+                        </a>
+                    </div>
+                    <p className="text-[11px] text-slate-400 text-center mt-3">{CITY}</p>
+                </section>
 
                 {/* Secret Admin Entry */}
                 <div className="pt-10 pb-6 flex flex-col items-center gap-3">

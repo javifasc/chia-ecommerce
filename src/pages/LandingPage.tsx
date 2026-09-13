@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { OWNER_PHONE } from '../utils/whatsappUtils';
+import { InstagramIcon, WhatsAppIcon } from '../components/BrandIcons';
+import { INSTAGRAM_URL, INSTAGRAM_USER, MAPS_URL, WHATSAPP_URL, CITY } from '../utils/contact';
 
 const LandingPage = () => {
     const values = [
@@ -90,7 +91,7 @@ const LandingPage = () => {
                         >
                             <Link
                                 to="/shop"
-                                className="h-16 px-10 bg-primary text-slate-900 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                className="h-16 px-8 sm:px-10 bg-primary text-slate-900 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 whitespace-nowrap shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 Ingresar a la Tienda
                                 <span aria-hidden="true" className="material-symbols-outlined">arrow_forward</span>
@@ -193,7 +194,7 @@ const LandingPage = () => {
                             </p>
                             <Link
                                 to="/shop"
-                                className="inline-flex h-20 px-12 bg-primary text-slate-900 rounded-2xl font-bold text-xl items-center justify-center gap-3 shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
+                                className="inline-flex h-16 sm:h-20 px-8 sm:px-12 bg-primary text-slate-900 rounded-2xl font-bold text-lg sm:text-xl items-center justify-center gap-3 whitespace-nowrap shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all"
                             >
                                 Comenzar Pedido
                                 <span aria-hidden="true" className="material-symbols-outlined">shopping_bag</span>
@@ -208,24 +209,35 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-8">
                     <div className="text-center sm:text-left">
                         <h4 className="font-bold text-lg mb-1">#CHIA Almacén Natural</h4>
-                        <p className="text-sm text-slate-400">Rada Tilly, Chubut. Patagonia Argentina.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{CITY} · Patagonia Argentina</p>
+                        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary-dark dark:text-primary hover:underline">@{INSTAGRAM_USER}</a>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap justify-center gap-2.5">
                         <a
-                            href={`https://wa.me/${OWNER_PHONE}`}
+                            href={INSTAGRAM_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Seguinos en Instagram, @${INSTAGRAM_USER}`}
+                            className="h-12 px-5 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:bg-primary/15 hover:text-primary-dark dark:hover:text-primary transition-all"
+                        >
+                            <InstagramIcon />
+                            Instagram
+                        </a>
+                        <a
+                            href={WHATSAPP_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Escribinos por WhatsApp"
                             className="h-12 px-5 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:bg-primary/15 hover:text-primary-dark dark:hover:text-primary transition-all"
                         >
-                            <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '20px' }}>chat</span>
+                            <WhatsAppIcon />
                             WhatsApp
                         </a>
                         <a
-                            href="https://www.google.com/maps/search/?api=1&query=CHIA+Almac%C3%A9n+Natural+Rada+Tilly"
+                            href={MAPS_URL}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label="Ver ubicación en Google Maps"
+                            aria-label="Ver la ubicación del local en Google Maps"
                             className="h-12 px-5 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:bg-primary/15 hover:text-primary-dark dark:hover:text-primary transition-all"
                         >
                             <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '20px' }}>location_on</span>
