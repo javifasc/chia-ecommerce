@@ -241,13 +241,34 @@ grant execute on function public.submit_suggestion(text) to anon, authenticated;
 -- ============================================================================
 -- 5.  DESIGNAR AL ADMINISTRADOR   <-- OBLIGATORIO ANTES DEL PASO 2
 -- ============================================================================
+
+-- 5.a  Perfiles faltantes
+-- El trigger handle_new_user (supabase_profiles.sql) crea el perfil al
+-- registrarse, pero se agregó después de que ya había cuentas creadas. Esas
+-- quedaron sin fila en profiles, y como is_admin() lee de ahí, nunca podrían
+-- ser admin. Esto las completa.
+insert into public.profiles (id, full_name, email, avatar_url)
+select u.id,
+       u.raw_user_meta_data->>'full_name',
+       u.email,
+       u.raw_user_meta_data->>'avatar_url'
+from auth.users u
+left join public.profiles p on p.id = u.id
+where p.id is null;
+
+-- 5.b  El admin
 -- Cambiá el email por el de TU cuenta y descomentá la línea.
--- Tiene que ser una cuenta ya registrada en la tienda.
+--
+-- El "returning" no es decorativo: sin él, si el email no coincide con ninguna
+-- cuenta, Postgres actualiza 0 filas y no avisa nada. Con returning, el editor
+-- te muestra la fila modificada; si no aparece ninguna, el email está mal.
 --
 -- Para ver las cuentas disponibles:
 --     select email from auth.users order by created_at;
 
--- update public.profiles set role = 'admin' where email = 'PONE_TU_EMAIL_ACA';
+-- update public.profiles set role = 'admin'
+-- where email = 'PONE_TU_EMAIL_ACA'
+-- returning email, role;
 
 
 -- ============================================================================
