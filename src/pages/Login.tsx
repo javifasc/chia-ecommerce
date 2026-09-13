@@ -42,7 +42,9 @@ const Login = () => {
         setError(null);
         const { error } = await signInWithGoogle();
         if (error) {
-            setError('Error al iniciar sesión con Google.');
+            // Ver nota en Register.tsx: sin el mensaje crudo no se puede diagnosticar.
+            console.error('Error de OAuth con Google:', error);
+            setError(error.message || 'Error al iniciar sesión con Google.');
             setIsGoogleLoading(false);
         }
     };
