@@ -10,9 +10,17 @@
 --  insertaba pedidos y descontaba stock desde el navegador) deja de funcionar
 --  acá, por eso va último.
 --
---  Reemplaza a supabase_rls_fix.sql, que deshabilitaba RLS "para desarrollo
---  rápido" y dejaba products, orders, order_items, delivery_fees y promotions
---  abiertas a cualquiera con la anon key (que es pública: viaja en el JS).
+--  Estado comprobado antes de aplicar esto (anon key vs service role):
+--      products             591 filas visibles para cualquiera   ABIERTA (lectura y escritura)
+--      promotions             2 filas visibles para cualquiera   ABIERTA
+--      product_suggestions    2 filas visibles para cualquiera   ABIERTA
+--      orders                 0 de 29  -> ya tenía RLS activo
+--      order_items            0 de 83  -> ya tenía RLS activo
+--      profiles               0 de 2   -> ya tenía RLS activo
+--
+--  O sea que supabase_rls_fix.sql apagó RLS en su momento, pero en orders,
+--  order_items y profiles se volvió a activar después por fuera del repo.
+--  Este archivo deja las seis tablas con políticas explícitas y verificables.
 --
 --  Es idempotente: se puede correr más de una vez.
 -- ============================================================================
@@ -26,6 +34,34 @@ begin
             'No hay ningún admin designado. Corré primero supabase_seguridad_paso1.sql y el update del paso 6.';
     end if;
 end $guard$;
+
+
+-- ----------------------------------------------------------------------------
+-- Borrar las políticas que ya existan en estas tablas
+-- ----------------------------------------------------------------------------
+-- orders, order_items y profiles ya tenían RLS activo de antes, con políticas
+-- que no están en ningún archivo de este repo. Las políticas de Postgres son
+-- permisivas y se combinan con OR: si quedara viva una vieja del estilo
+-- "authenticated puede leer todo", anularía las de abajo sin hacer ruido.
+-- Por eso se parte de cero.
+--
+-- profiles queda afuera a propósito: sus políticas (ver el perfil propio) son
+-- correctas y las necesitamos.
+
+do $limpieza$
+declare r record;
+begin
+    for r in
+        select policyname, tablename
+        from pg_policies
+        where schemaname = 'public'
+          and tablename in ('products', 'orders', 'order_items',
+                            'delivery_fees', 'promotions', 'product_suggestions')
+    loop
+        raise notice 'Borrando política vieja: %.%', r.tablename, r.policyname;
+        execute format('drop policy if exists %I on public.%I', r.policyname, r.tablename);
+    end loop;
+end $limpieza$;
 
 
 -- ----------------------------------------------------------------------------
@@ -114,8 +150,13 @@ revoke insert on public.product_suggestions from anon, authenticated;
 -- ============================================================================
 -- Verificación
 -- ============================================================================
--- Todas las tablas deben figurar con rowsecurity = true:
+-- 1) Todas las tablas deben figurar con rowsecurity = true:
 --     select tablename, rowsecurity from pg_tables where schemaname = 'public';
 --
--- Y tiene que seguir habiendo al menos un admin:
+-- 2) Revisar que las políticas sean exactamente las esperadas, sin sobrantes
+--    de configuraciones anteriores:
+--     select tablename, policyname, cmd from pg_policies
+--     where schemaname = 'public' order by tablename, policyname;
+--
+-- 3) Tiene que seguir habiendo al menos un admin:
 --     select email, role from public.profiles where role = 'admin';
