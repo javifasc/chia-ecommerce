@@ -22,9 +22,11 @@ const Toast = ({ message, isVisible, onClose }: ToastProps) => {
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 dark:bg-primary text-white dark:text-slate-900 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10"
+                    role="status"
+                    aria-live="polite"
+                    className="fixed bottom-44 left-1/2 -translate-x-1/2 z-[100] max-w-[90vw] bg-slate-900 dark:bg-primary text-white dark:text-slate-900 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10"
                 >
-                    <span className="material-symbols-outlined text-primary dark:text-slate-900" style={{ fontSize: '20px' }}>check_circle</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-primary dark:text-slate-900" style={{ fontSize: '20px' }}>check_circle</span>
                     <span className="text-sm font-bold tracking-tight">{message}</span>
                 </motion.div>
             )}

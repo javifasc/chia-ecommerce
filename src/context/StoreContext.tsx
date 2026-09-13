@@ -228,7 +228,11 @@ function storeReducer(state: State, action: Action): State {
                 ? state.favorites.filter(id => id !== action.productId)
                 : [...state.favorites, action.productId];
 
-            localStorage.setItem('chia_favorites', JSON.stringify(favorites));
+            try {
+                localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+            } catch {
+                // almacenamiento no disponible (incógnito, cuota): seguimos en memoria
+            }
             return { ...state, favorites };
         }
 
@@ -257,6 +261,35 @@ function storeReducer(state: State, action: Action): State {
     }
 }
 
+// --- Persistencia local ---
+// El carrito vivía solo en memoria: cualquier recarga o cierre de pestaña lo vaciaba.
+
+const CART_KEY = 'chia_cart';
+const FAVORITES_KEY = 'chia_favorites';
+
+function loadStoredCart(): CartItem[] {
+    try {
+        const raw = localStorage.getItem(CART_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(
+            (item): item is CartItem =>
+                !!item && typeof item.productId === 'string' && typeof item.quantity === 'number' && item.quantity > 0
+        );
+    } catch {
+        return [];
+    }
+}
+
+function loadStoredFavorites(): string[] {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+    } catch {
+        return [];
+    }
+}
+
 // --- Context ---
 
 const StoreContext = createContext<{
@@ -282,10 +315,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [state, dispatch] = useReducer(storeReducer, {
         isLoading: true,
         products: [],
-        cart: [],
+        cart: loadStoredCart(),
         orders: [],
         historyOrders: [],
-        favorites: JSON.parse(localStorage.getItem('chia_favorites') || '[]'),
+        favorites: loadStoredFavorites(),
         promotions: INITIAL_PROMOTIONS,
         deliveryFees: {},
         freeShippingThreshold: 0,
@@ -298,6 +331,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
 
     const publicDataLoaded = useRef(false);
+
+    // Guarda el carrito en cada cambio para que sobreviva a una recarga.
+    useEffect(() => {
+        try {
+            localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
+        } catch {
+            // almacenamiento no disponible (incógnito, cuota): seguimos en memoria
+        }
+    }, [state.cart]);
 
     // EFFECT 1 - load public data, runs ONCE on mount (not on auth changes)
     useEffect(() => {

@@ -48,20 +48,20 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased italic-none">
+        <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased not-italic">
             <div className="w-full max-w-sm space-y-8 animate-in fade-in zoom-in-95 duration-500">
                 <div className="text-center">
                     <div className="inline-flex size-16 items-center justify-center rounded-3xl bg-primary/20 text-primary-dark mb-4 group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-4xl">account_circle</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-4xl">account_circle</span>
                     </div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Bienvenido a #CHIA</h1>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium italic-none">Ingresa para gestionar tus pedidos y envíos</p>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium not-italic">Ingresa para gestionar tus pedidos y envíos</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-4 text-left">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Email</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Email</label>
                             <input
                                 autoFocus
                                 type="email"
@@ -77,8 +77,8 @@ const Login = () => {
                         </div>
                         <div>
                             <div className="flex justify-between items-end mb-2 px-1">
-                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contraseña</label>
-                                <button type="button" className="text-[10px] font-bold text-primary-dark opacity-50 hover:opacity-100 transition-opacity">¿Olvidaste tu contraseña?</button>
+                                <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Contraseña</label>
+                                <span className="text-[11px] font-medium text-slate-400">¿Olvidaste tu clave? Escribinos por WhatsApp</span>
                             </div>
                             <div className="relative">
                                 <input
@@ -94,10 +94,11 @@ const Login = () => {
                                 />
                                 <button
                                     type="button"
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-primary transition-colors"
                                 >
-                                    <span className="material-symbols-outlined text-xl">
+                                    <span aria-hidden="true" className="material-symbols-outlined text-xl">
                                         {showPassword ? 'visibility' : 'visibility_off'}
                                     </span>
                                 </button>
@@ -107,8 +108,8 @@ const Login = () => {
 
                     {error && (
                         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20">
-                            <span className="material-symbols-outlined text-red-500 text-sm">error</span>
-                            <p className="text-[10px] text-red-500 font-black uppercase tracking-wider">{error}</p>
+                            <span aria-hidden="true" className="material-symbols-outlined text-red-500 text-sm">error</span>
+                            <p className="text-[11px] text-red-500 font-bold uppercase tracking-wider">{error}</p>
                         </div>
                     )}
 
@@ -122,7 +123,7 @@ const Login = () => {
                         ) : (
                             <>
                                 <span>Iniciar Sesión</span>
-                                <span className="material-symbols-outlined text-lg">login</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-lg">login</span>
                             </>
                         )}
                     </button>
@@ -130,7 +131,7 @@ const Login = () => {
 
                 <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100 dark:border-slate-800" /></div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-background-light dark:bg-background-dark px-4 text-slate-400 font-black">O</span></div>
+                    <div className="relative flex justify-center text-[11px] uppercase tracking-widest"><span className="bg-background-light dark:bg-background-dark px-4 text-slate-400 font-bold">O</span></div>
                 </div>
 
                 <button
@@ -176,14 +177,14 @@ const Login = () => {
                     
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100 dark:border-slate-800" /></div>
-                        <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-background-light dark:bg-background-dark px-4 text-slate-400 font-black">O continúa como invitado</span></div>
+                        <div className="relative flex justify-center text-[11px] uppercase tracking-widest"><span className="bg-background-light dark:bg-background-dark px-4 text-slate-400 font-bold">O continúa como invitado</span></div>
                     </div>
 
                     <Link 
                         to="/shop" 
                         className="flex w-full items-center justify-center font-bold py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors gap-2"
                     >
-                        <span className="material-symbols-outlined text-lg">shopping_basket</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">shopping_basket</span>
                         Seguir comprando
                     </Link>
                 </div>

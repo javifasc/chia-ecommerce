@@ -51,33 +51,33 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased italic-none">
+        <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased not-italic">
             <div className="w-full max-w-sm space-y-8 animate-in fade-in zoom-in-95 duration-500">
                 <div className="text-center">
                     <div className="inline-flex size-16 items-center justify-center rounded-3xl bg-primary/20 text-primary-dark mb-4 group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-4xl">person_add</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-4xl">person_add</span>
                     </div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Crea tu cuenta</h1>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium italic-none">Ahorra tiempo guardando tus datos de envío</p>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium not-italic">Ahorra tiempo guardando tus datos de envío</p>
                 </div>
 
                 {/* Benefits List */}
                 <div className="bg-sage/5 dark:bg-slate-800/50 p-4 rounded-3xl border border-sage/10 dark:border-slate-700/50 space-y-3">
                     <div className="flex items-center gap-3">
                         <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-[14px] text-primary-dark">bolt</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary-dark">bolt</span>
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Reserva en segundos sin rellenar datos</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-[14px] text-primary-dark">history</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary-dark">history</span>
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Acceso a tu historial de pedidos</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-[14px] text-primary-dark">sell</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary-dark">sell</span>
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Ofertas y preventas exclusivas</p>
                     </div>
@@ -86,7 +86,7 @@ const Register = () => {
                 <form onSubmit={handleSubmit} className="mt-8 space-y-4 text-left">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Nombre Completo</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Nombre Completo</label>
                             <input
                                 autoFocus
                                 type="text"
@@ -98,7 +98,7 @@ const Register = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Email</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Email</label>
                             <input
                                 type="email"
                                 value={email}
@@ -109,7 +109,7 @@ const Register = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Contraseña</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Contraseña</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -122,17 +122,18 @@ const Register = () => {
                                 />
                                 <button
                                     type="button"
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-primary transition-colors"
                                 >
-                                    <span className="material-symbols-outlined text-xl">
+                                    <span aria-hidden="true" className="material-symbols-outlined text-xl">
                                         {showPassword ? 'visibility' : 'visibility_off'}
                                     </span>
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Confirmar Contraseña</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Confirmar Contraseña</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -144,7 +145,7 @@ const Register = () => {
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 flex items-center gap-2">
                                     {confirmPassword && (
-                                        <span className={`material-symbols-outlined text-lg ${password === confirmPassword ? 'text-green-500' : 'text-red-500'}`}>
+                                        <span aria-hidden="true" className={`material-symbols-outlined text-lg ${password === confirmPassword ? 'text-green-500' : 'text-red-500'}`}>
                                             {password === confirmPassword ? 'check_circle' : 'error'}
                                         </span>
                                     )}
@@ -155,8 +156,8 @@ const Register = () => {
 
                     {error && (
                         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20">
-                            <span className="material-symbols-outlined text-red-500 text-sm">error</span>
-                            <p className="text-[10px] text-red-500 font-black uppercase tracking-wider">{error}</p>
+                            <span aria-hidden="true" className="material-symbols-outlined text-red-500 text-sm">error</span>
+                            <p className="text-[11px] text-red-500 font-bold uppercase tracking-wider">{error}</p>
                         </div>
                     )}
 
@@ -170,7 +171,7 @@ const Register = () => {
                         ) : (
                             <>
                                 <span>Crear Mi Cuenta</span>
-                                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-lg">arrow_forward</span>
                             </>
                         )}
                     </button>
@@ -178,7 +179,7 @@ const Register = () => {
 
                 <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100 dark:border-slate-800" /></div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-background-light dark:bg-background-dark px-4 text-slate-400 font-black">O</span></div>
+                    <div className="relative flex justify-center text-[11px] uppercase tracking-widest"><span className="bg-background-light dark:bg-background-dark px-4 text-slate-400 font-bold">O</span></div>
                 </div>
 
                 <button
@@ -224,7 +225,7 @@ const Register = () => {
                     
                     <Link 
                         to="/shop" 
-                        className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors"
+                        className="text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors"
                     >
                         Continuar como invitado
                     </Link>

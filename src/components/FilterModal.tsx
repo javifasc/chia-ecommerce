@@ -53,22 +53,36 @@ const FilterModal = ({
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[32px] z-[70] p-6 shadow-2xl text-left italic-none"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Filtros de búsqueda"
+                        className="fixed bottom-0 left-0 right-0 mx-auto max-w-lg bg-white dark:bg-slate-900 rounded-t-2xl z-[70] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] shadow-2xl text-left not-italic"
                     >
                         <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6" />
 
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-xl font-bold">Filtros</h2>
-                            <button
-                                onClick={() => {
-                                    setSelectedBadges([]);
-                                    setMaxPrice(9999999);
-                                    setSelectedCategory('Todo');
-                                }}
-                                className="text-primary-dark font-bold text-sm"
-                            >
-                                Limpiar todo
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedBadges([]);
+                                        setMaxPrice(9999999);
+                                        setSelectedCategory('Todo');
+                                    }}
+                                    className="text-primary-dark dark:text-primary font-bold text-sm px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors"
+                                >
+                                    Limpiar todo
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Cerrar filtros"
+                                    onClick={onClose}
+                                    className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 active:scale-90 transition-transform"
+                                >
+                                    <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div className="space-y-8">
@@ -111,7 +125,7 @@ const FilterModal = ({
                                     }}
                                     className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary"
                                 />
-                                <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-400">
+                                <div className="flex justify-between mt-2 text-[11px] font-bold text-slate-400">
                                     <span>$0</span>
                                     <span>$1000+</span>
                                 </div>
@@ -131,7 +145,7 @@ const FilterModal = ({
                                                 }`}
                                         >
                                             {selectedBadges.includes(option) && (
-                                                <span className="material-symbols-outlined text-[14px]">check</span>
+                                                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">check</span>
                                             )}
                                             {option}
                                         </button>

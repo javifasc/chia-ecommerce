@@ -51,11 +51,11 @@ const AdminLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased italic-none">
+        <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased not-italic">
             <div className="w-full max-w-sm space-y-8 animate-in fade-in zoom-in-95 duration-500">
                 <div className="text-center">
                     <div className="inline-flex size-16 items-center justify-center rounded-3xl bg-primary/20 text-primary-dark mb-4">
-                        <span className="material-symbols-outlined text-4xl">lock</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-4xl">lock</span>
                     </div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Acceso Dueño</h1>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium">#CHIA Gestión Administrativa</p>
@@ -97,7 +97,7 @@ const AdminLogin = () => {
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center justify-center"
                                 >
-                                    <span className="material-symbols-outlined text-xl">
+                                    <span aria-hidden="true" className="material-symbols-outlined text-xl">
                                         {showPassword ? 'visibility' : 'visibility_off'}
                                     </span>
                                 </button>
@@ -115,13 +115,13 @@ const AdminLogin = () => {
                         className="w-full bg-primary text-slate-900 font-bold py-4 rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
                     >
                         {isLoading ? 'Verificando...' : 'Ingresar al Panel'}
-                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">arrow_forward</span>
                     </button>
                 </form>
 
                 <div className="text-center pt-8">
                     <Link to="/" className="text-sm font-bold text-sage hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center gap-1 group">
-                        <span className="material-symbols-outlined text-base transition-transform group-hover:-translate-x-1">arrow_back</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-base transition-transform group-hover:-translate-x-1">arrow_back</span>
                         Volver a la Tienda
                     </Link>
                 </div>

@@ -121,10 +121,10 @@ const ProductUpload = () => {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased selection:bg-primary selection:text-primary-content min-h-screen pb-24 max-w-md mx-auto shadow-2xl relative italic-none">
-            <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 border-b border-slate-200 dark:border-slate-800 pt-12">
+        <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased selection:bg-primary selection:text-primary-content min-h-screen pb-24 max-w-md mx-auto shadow-2xl relative not-italic">
+            <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] border-b border-slate-200 dark:border-slate-800">
                 <Link to="/admin" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-slate-800 active:scale-95 transition-transform">
-                    <span className="material-symbols-outlined text-2xl">arrow_back</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-2xl">arrow_back</span>
                 </Link>
                 <h1 className="text-lg font-bold tracking-tight">{isEditMode ? 'Editar Producto' : 'Nuevo Producto'}</h1>
                 <button
@@ -151,7 +151,7 @@ const ProductUpload = () => {
                     >
                         <img src={image} alt="Preview" className="w-full h-full object-cover opacity-80" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white backdrop-blur-[2px]">
-                            <span className="material-symbols-outlined text-3xl">add_a_photo</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-3xl">add_a_photo</span>
                             <p className="text-xs font-bold uppercase tracking-widest">Cambiar Imagen</p>
                         </div>
                     </div>
@@ -230,7 +230,7 @@ const ProductUpload = () => {
                                             setBadges(badges ? `${badges}, ${tag}` : tag);
                                         }
                                     }}
-                                    className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold rounded-lg hover:bg-primary/20 hover:text-primary-dark transition-colors"
+                                    className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[11px] font-bold rounded-lg hover:bg-primary/20 hover:text-primary-dark transition-colors"
                                 >
                                     + {tag}
                                 </button>
@@ -249,7 +249,7 @@ const ProductUpload = () => {
                         <label className="block text-xs font-bold uppercase tracking-widest text-slate-400">Información Nutricional</label>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400">Calorías</label>
+                                <label className="text-[11px] font-bold text-slate-400">Calorías</label>
                                 <input
                                     value={calories}
                                     onChange={(e) => setCalories(e.target.value)}
@@ -258,7 +258,7 @@ const ProductUpload = () => {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400">Proteína</label>
+                                <label className="text-[11px] font-bold text-slate-400">Proteína</label>
                                 <input
                                     value={protein}
                                     onChange={(e) => setProtein(e.target.value)}
@@ -267,7 +267,7 @@ const ProductUpload = () => {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400">Carbohidratos</label>
+                                <label className="text-[11px] font-bold text-slate-400">Carbohidratos</label>
                                 <input
                                     value={carbs}
                                     onChange={(e) => setCarbs(e.target.value)}
@@ -276,7 +276,7 @@ const ProductUpload = () => {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400">Grasas</label>
+                                <label className="text-[11px] font-bold text-slate-400">Grasas</label>
                                 <input
                                     value={fat}
                                     onChange={(e) => setFat(e.target.value)}
@@ -330,7 +330,7 @@ const ProductUpload = () => {
                         <div className="flex items-center justify-between p-1">
                             <div className="space-y-0.5">
                                 <label className="text-sm font-bold text-slate-900 dark:text-white">¿Producto fraccionado?</label>
-                                <p className="text-[10px] text-slate-400 font-medium">Permite vender por peso (ej: cada 250g)</p>
+                                <p className="text-[11px] text-slate-400 font-medium">Permite vender por peso (ej: cada 250g)</p>
                             </div>
                             <button
                                 type="button"
@@ -353,7 +353,7 @@ const ProductUpload = () => {
                                         placeholder="ej: 250"
                                         type="number"
                                     />
-                                    <p className="mt-1 text-[10px] text-primary font-bold italic">
+                                    <p className="mt-1 text-[11px] text-primary font-bold italic">
                                         Tip: Poné 250 si querés que el cliente sume de a 250 gramos por click. El stock se descontará en consecuencia (0.250kg).
                                     </p>
                                 </div>
@@ -375,12 +375,12 @@ const ProductUpload = () => {
                     {isSubmitting ? (
                         <>
                             <span>Guardando...</span>
-                            <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
                         </>
                     ) : (
                         <>
                             <span>{isEditMode ? 'Actualizar Producto' : 'Publicar Producto'}</span>
-                            <span className="material-symbols-outlined text-lg font-bold">check</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-lg font-bold">check</span>
                         </>
                     )}
                 </button>

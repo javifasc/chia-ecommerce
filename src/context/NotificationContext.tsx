@@ -89,14 +89,14 @@ const ToastContainer = () => {
                                 toast.type === 'warning' ? 'bg-orange-500/90' : 'bg-slate-800/90'}
                     `}
                 >
-                    <span className="material-symbols-outlined text-lg">
+                    <span aria-hidden="true" className="material-symbols-outlined text-lg">
                         {toast.type === 'success' ? 'check_circle' :
                             toast.type === 'error' ? 'error' :
                                 toast.type === 'warning' ? 'warning' : 'info'}
                     </span>
                     <p className="text-sm font-bold tracking-tight flex-1">{toast.message}</p>
-                    <button onClick={() => removeToast(toast.id)} className="opacity-70 hover:opacity-100">
-                        <span className="material-symbols-outlined text-base">close</span>
+                    <button type="button" aria-label="Cerrar aviso" onClick={() => removeToast(toast.id)} className="opacity-70 hover:opacity-100">
+                        <span aria-hidden="true" className="material-symbols-outlined text-base">close</span>
                     </button>
                 </div>
             ))}
@@ -121,16 +121,16 @@ const ConfirmModal = () => {
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center px-6">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={closeConfirm}></div>
-            <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-200 text-center border border-slate-100 dark:border-slate-800">
+            <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-2xl animate-in zoom-in-95 duration-200 text-center border border-slate-100 dark:border-slate-800">
                 <div className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6 
                     ${isDestructive ? 'bg-red-50 dark:bg-red-900/20 text-red-500' : 'bg-primary/10 text-primary-dark dark:text-primary'}
                 `}>
-                    <span className="material-symbols-outlined text-3xl">
+                    <span aria-hidden="true" className="material-symbols-outlined text-3xl">
                         {isDestructive ? 'delete_forever' : 'help_outline'}
                     </span>
                 </div>
 
-                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">{title}</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-8">
                     {message}
                 </p>
@@ -141,7 +141,7 @@ const ConfirmModal = () => {
                             onConfirm();
                             closeConfirm();
                         }}
-                        className={`w-full py-4 rounded-2xl text-sm font-black shadow-lg shadow-black/5 transition-all active:scale-[0.98]
+                        className={`w-full py-4 rounded-2xl text-sm font-bold shadow-lg shadow-black/5 transition-all active:scale-[0.98]
                             ${isDestructive
                                 ? 'bg-red-500 text-white hover:bg-red-600'
                                 : 'bg-primary text-slate-900 hover:brightness-105'}

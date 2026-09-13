@@ -158,7 +158,7 @@ const AdminDashboard = () => {
     const filterLabels: Record<TimeFilter, string> = { day: 'Hoy', week: 'Semana', month: 'Mes' };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen pb-20 italic-none">
+        <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen pb-20 not-italic">
             {/* Header */}
             <div className="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-4 pt-6 pb-2 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-3">
@@ -175,15 +175,15 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex items-center gap-1">
                     <Link to="/admin/suggestions" className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 relative">
-                        <span className="material-symbols-outlined">volunteer_activism</span>
+                        <span aria-hidden="true" className="material-symbols-outlined">volunteer_activism</span>
                         {suggestionCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-amber-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-background-dark animate-pulse">
+                            <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-amber-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center ring-2 ring-white dark:ring-background-dark animate-pulse">
                                 {suggestionCount > 9 ? '9+' : suggestionCount}
                             </span>
                         )}
                     </Link>
                     <Link to="/" className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300">
-                        <span className="material-symbols-outlined">storefront</span>
+                        <span aria-hidden="true" className="material-symbols-outlined">storefront</span>
                     </Link>
                 </div>
             </div>
@@ -210,13 +210,13 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-2 gap-3 text-left">
                     <div className="col-span-2 bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <span className="material-symbols-outlined text-6xl text-primary">attach_money</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-6xl text-primary">attach_money</span>
                         </div>
                         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Facturado ({filterLabels[timeFilter]})</p>
                         <div className="flex items-end gap-2 mb-2">
                             <h2 className="text-3xl font-bold tracking-tight">${totalSales.toFixed(2)}</h2>
                             <span className="flex items-center text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full mb-1">
-                                <span className="material-symbols-outlined text-[14px] mr-1">trending_up</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[14px] mr-1">trending_up</span>
                                 {filteredOrders.length} pedidos
                             </span>
                         </div>
@@ -226,7 +226,7 @@ const AdminDashboard = () => {
                         <p className="text-slate-500 text-xs font-medium mb-1">Ticket Promedio</p>
                         <div className="flex items-center justify-between">
                             <h3 className="text-2xl font-bold">${averageTicket.toFixed(2)}</h3>
-                            <span className="material-symbols-outlined text-blue-500">analytics</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-blue-500">analytics</span>
                         </div>
                     </div>
 
@@ -234,7 +234,7 @@ const AdminDashboard = () => {
                         <p className="text-slate-500 text-xs font-medium mb-1">Total Productos</p>
                         <div className="flex items-center justify-between">
                             <h3 className="text-2xl font-bold">{totalProducts}</h3>
-                            <span className="material-symbols-outlined text-green-500">inventory_2</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-green-500">inventory_2</span>
                         </div>
                     </div>
 
@@ -242,7 +242,7 @@ const AdminDashboard = () => {
                         <p className="text-slate-500 text-xs font-medium mb-1">Pedidos Pendientes</p>
                         <div className="flex items-center justify-between">
                             <h3 className="text-2xl font-bold">{pendingOrdersCount}</h3>
-                            <span className="material-symbols-outlined text-orange-500">pending_actions</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-orange-500">pending_actions</span>
                         </div>
                     </Link>
 
@@ -250,7 +250,7 @@ const AdminDashboard = () => {
                         <p className="text-slate-500 text-xs font-medium mb-1">Stock Bajo</p>
                         <div className="flex items-center justify-between">
                             <h3 className="text-2xl font-bold">{lowStockCount}</h3>
-                            <span className="material-symbols-outlined text-red-500">warning</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-red-500">warning</span>
                         </div>
                     </Link>
                 </div>
@@ -259,7 +259,7 @@ const AdminDashboard = () => {
                 <div className="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 text-left">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-lg">Ventas por Día</h3>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
                     </div>
                     {dailySalesData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={200}>
@@ -283,7 +283,7 @@ const AdminDashboard = () => {
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">
-                            <span className="material-symbols-outlined mr-2">info</span>
+                            <span aria-hidden="true" className="material-symbols-outlined mr-2">info</span>
                             Sin datos para este período
                         </div>
                     )}
@@ -293,7 +293,7 @@ const AdminDashboard = () => {
                 <div className="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 text-left">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-lg">Facturación por Día</h3>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
                     </div>
                     {dailyRevenueData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={200}>
@@ -318,7 +318,7 @@ const AdminDashboard = () => {
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">
-                            <span className="material-symbols-outlined mr-2">info</span>
+                            <span aria-hidden="true" className="material-symbols-outlined mr-2">info</span>
                             Sin datos para este período
                         </div>
                     )}
@@ -340,11 +340,11 @@ const AdminDashboard = () => {
                                 onClick={() => setDrillCategory(null)}
                                 className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
                             >
-                                <span className="material-symbols-outlined text-sm">arrow_back</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-sm">arrow_back</span>
                                 Volver
                             </button>
                         ) : (
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Click para detalles</span>
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Click para detalles</span>
                         )}
                     </div>
                     {categoryPieData.length > 0 ? (
@@ -390,7 +390,7 @@ const AdminDashboard = () => {
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-[280px] flex items-center justify-center text-slate-400 text-sm">
-                            <span className="material-symbols-outlined mr-2">info</span>
+                            <span aria-hidden="true" className="material-symbols-outlined mr-2">info</span>
                             Sin datos para este período
                         </div>
                     )}
@@ -400,7 +400,7 @@ const AdminDashboard = () => {
                 <div className="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 text-left">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-lg">Productos más Vendidos</h3>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{filterLabels[timeFilter]}</span>
                     </div>
                     {topSellingProducts.length > 0 ? (
                         <div className="space-y-3.5">
@@ -411,27 +411,27 @@ const AdminDashboard = () => {
                                             {prod.image ? (
                                                 <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                <span className="material-symbols-outlined text-xl">shopping_bag</span>
+                                                <span aria-hidden="true" className="material-symbols-outlined text-xl">shopping_bag</span>
                                             )}
-                                            <div className="absolute top-0 left-0 bg-primary/95 text-slate-900 text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-br-lg shadow-sm">
+                                            <div className="absolute top-0 left-0 bg-primary/95 text-slate-900 text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-br-lg shadow-sm">
                                                 {index + 1}
                                             </div>
                                         </div>
                                         <div className="min-w-0">
                                             <p className="font-bold text-sm truncate text-slate-900 dark:text-white leading-snug">{prod.name}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">${prod.price.toFixed(2)} por {prod.isFractional ? 'kg' : 'un.'}</p>
+                                            <p className="text-[11px] text-slate-400 font-medium">${prod.price.toFixed(2)} por {prod.isFractional ? 'kg' : 'un.'}</p>
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="font-black text-sm text-primary-dark dark:text-primary">{formatWeight(prod.quantity, prod.isFractional)}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Facturado: ${(prod.price * prod.quantity).toFixed(2)}</p>
+                                        <p className="font-bold text-sm text-primary-dark dark:text-primary">{formatWeight(prod.quantity, prod.isFractional)}</p>
+                                        <p className="text-[11px] text-slate-400 font-medium">Facturado: ${(prod.price * prod.quantity).toFixed(2)}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
                         <div className="py-10 text-center text-slate-400 text-sm">
-                            <span className="material-symbols-outlined mb-2 block text-3xl">sentiment_dissatisfied</span>
+                            <span aria-hidden="true" className="material-symbols-outlined mb-2 block text-3xl">sentiment_dissatisfied</span>
                             No hay ventas registradas en este período.
                         </div>
                     )}
@@ -439,7 +439,7 @@ const AdminDashboard = () => {
 
                 <div className="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 text-left">
                     <div className="flex items-center gap-2 mb-4">
-                        <span className="material-symbols-outlined text-primary">local_shipping</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-primary">local_shipping</span>
                         <h3 className="font-bold text-lg">Configuración de Envíos</h3>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Configura el monto mínimo para habilitar el envío gratis a domicilio (Rada Tilly).</p>
@@ -459,7 +459,7 @@ const AdminDashboard = () => {
                                 />
                             </div>
                         </div>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-3 italic">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3 italic">
                             Los pedidos que alcancen este monto podrán solicitar envío a domicilio sin costo adicional.
                         </p>
                     </div>
@@ -471,20 +471,20 @@ const AdminDashboard = () => {
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary-dark">
-                                    <span className="material-symbols-outlined">auto_awesome</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined">auto_awesome</span>
                                 </div>
                                 <div>
-                                    <p className="font-black text-sm uppercase tracking-tight">Gestión de Portada</p>
+                                    <p className="font-bold text-sm uppercase tracking-tight">Gestión de Portada</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">Edita banners, novedades y ofertas.</p>
                                 </div>
                             </div>
-                            <span className="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">arrow_forward</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">arrow_forward</span>
                         </div>
                     </Link>
 
                     <Link to="/admin/inventory" className="block bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-slate-400">inventory</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-slate-400">inventory</span>
                             <div>
                                 <p className="text-sm font-bold">Resumen de Inventario</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Gestionando {totalProducts} productos activos.</p>
@@ -498,23 +498,23 @@ const AdminDashboard = () => {
             <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-background-dark/95 backdrop-blur-lg px-6 pb-safe pt-3 z-50">
                 <div className="flex justify-between items-center max-w-md mx-auto h-16">
                     <Link to="/admin" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-900 dark:text-primary group">
-                        <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>bar_chart</span>
-                        <span className="text-[10px] font-bold">Panel</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>bar_chart</span>
+                        <span className="text-[11px] font-bold">Panel</span>
                     </Link>
                     <Link to="/admin/orders" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors relative">
-                        <span className="material-symbols-outlined text-[28px]">assignment</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]">assignment</span>
                         {state.hasUnreadOrders && (
                             <span className="absolute top-0 right-1/2 translate-x-3 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-background-dark rounded-full animate-pulse"></span>
                         )}
-                        <span className="text-[10px] font-medium">Pedidos</span>
+                        <span className="text-[11px] font-medium">Pedidos</span>
                     </Link>
                     <Link to="/admin/inventory" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                        <span className="material-symbols-outlined text-[28px]">inventory_2</span>
-                        <span className="text-[10px] font-medium">Inventario</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]">inventory_2</span>
+                        <span className="text-[11px] font-medium">Inventario</span>
                     </Link>
                     <Link to="/admin/upload" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                        <span className="material-symbols-outlined text-[28px]">add_circle</span>
-                        <span className="text-[10px] font-medium">Nuevo</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]">add_circle</span>
+                        <span className="text-[11px] font-medium">Nuevo</span>
                     </Link>
                 </div>
             </div>

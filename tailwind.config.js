@@ -7,9 +7,14 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        // Usado por la barra de compra del detalle de producto.
+        "xs": "380px",
+      },
       colors: {
         "primary": "#51b800",
-        "primary-dark": "#3e8d00",
+        // Oscurecido desde #3e8d00 para alcanzar contraste AA (4.9:1) sobre blanco.
+        "primary-dark": "#35800a",
         "primary-content": "#ffffff",
         "background-light": "#fbf9f4",
         "background-dark": "#1a1c18",
@@ -29,6 +34,8 @@ export default {
         "lg": "1rem",
         "xl": "1.5rem",
         "2xl": "2rem",
+        // Radio editorial de las tarjetas grandes de la landing.
+        "card": "2.5rem",
         "full": "9999px",
       },
     },

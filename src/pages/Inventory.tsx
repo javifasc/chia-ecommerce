@@ -205,11 +205,11 @@ const Inventory = () => {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-200 min-h-screen pb-24 relative italic-none">
+        <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-200 min-h-screen pb-24 relative not-italic">
             <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 pt-6 pb-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Link to="/admin" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <span className="material-symbols-outlined">arrow_back</span>
+                        <span aria-hidden="true" className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <h1 className="text-xl font-bold flex-1 text-center"><span className="text-primary mr-1">#CHIA</span> Inventario</h1>
                     <div className="flex items-center gap-1">
@@ -225,14 +225,14 @@ const Inventory = () => {
                             className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all ${isRefreshing ? 'animate-spin text-primary' : 'text-slate-400'}`}
                             title="Refrescar datos"
                         >
-                            <span className="material-symbols-outlined">refresh</span>
+                            <span aria-hidden="true" className="material-symbols-outlined">refresh</span>
                         </button>
                         <button
                             onClick={() => setShowImport(true)}
                             className="p-2 -mr-2 rounded-full hover:bg-primary/10 text-primary transition-colors relative group"
                             title="Importar stock desde archivo"
                         >
-                            <span className="material-symbols-outlined">upload_file</span>
+                            <span aria-hidden="true" className="material-symbols-outlined">upload_file</span>
                         </button>
                     </div>
                 </div>
@@ -244,49 +244,49 @@ const Inventory = () => {
                     <div className="p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm transition-all hover:shadow-md">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-slate-400 text-lg">inventory</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-slate-400 text-lg">inventory</span>
                             </div>
-                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Total</p>
+                            <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Total</p>
                         </div>
-                        <p className="text-3xl font-black">{totalItems}</p>
+                        <p className="text-3xl font-bold">{totalItems}</p>
                     </div>
                     <div className="p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm transition-all hover:shadow-md">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-orange-500 text-lg">warning</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-orange-500 text-lg">warning</span>
                             </div>
-                            <p className="text-orange-500 text-[10px] font-black uppercase tracking-widest">Stock Bajo</p>
+                            <p className="text-orange-500 text-[11px] font-bold uppercase tracking-widest">Stock Bajo</p>
                         </div>
-                        <p className="text-3xl font-black text-orange-500">{lowStockCount}</p>
+                        <p className="text-3xl font-bold text-orange-500">{lowStockCount}</p>
                     </div>
                     <div className="p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm transition-all hover:shadow-md">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-red-500 text-lg">error</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-red-500 text-lg">error</span>
                             </div>
-                            <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">Agotado</p>
+                            <p className="text-red-500 text-[11px] font-bold uppercase tracking-widest">Agotado</p>
                         </div>
-                        <p className="text-3xl font-black text-red-500">{outOfStockCount}</p>
+                        <p className="text-3xl font-bold text-red-500">{outOfStockCount}</p>
                     </div>
                 </div>
 
                 <div className="flex items-end gap-3">
                     {/* Search Bar */}
                     <div className="relative flex-1">
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        <span aria-hidden="true" className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                         <input
                             type="text"
                             placeholder="Buscar por nombre o código..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all italic-none"
+                            className="w-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all not-italic"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery('')}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                             >
-                                <span className="material-symbols-outlined text-sm">close</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-sm">close</span>
                             </button>
                         )}
                     </div>
@@ -297,8 +297,8 @@ const Inventory = () => {
                         className={`h-[56px] px-5 rounded-2xl border flex items-center gap-2 transition-all active:scale-95 ${filterNewArrivals ? 'bg-amber-100 border-amber-200 text-amber-600 shadow-sm shadow-amber-200/50' : 'bg-white dark:bg-surface-dark border-slate-200 dark:border-slate-800 text-slate-400'}`}
                         title="Ver solo novedades"
                     >
-                        <span className="material-symbols-outlined" style={{ fontVariationSettings: filterNewArrivals ? "'FILL' 1" : "'FILL' 0" }}>{filterNewArrivals ? 'star' : 'star_outline'}</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Novedades</span>
+                        <span aria-hidden="true" className="material-symbols-outlined" style={{ fontVariationSettings: filterNewArrivals ? "'FILL' 1" : "'FILL' 0" }}>{filterNewArrivals ? 'star' : 'star_outline'}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-widest hidden sm:block">Novedades</span>
                     </button>
                 </div>
 
@@ -318,7 +318,7 @@ const Inventory = () => {
                                     setSelectedSubcategory('Todo');
                                 }}
                                 className={`
-                                    whitespace-nowrap px-5 py-2 rounded-full text-xs font-black transition-all active:scale-95
+                                    whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold transition-all active:scale-95
                                     ${selectedCategory === cat
                                         ? 'bg-primary text-slate-900 shadow-md shadow-primary/20'
                                         : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border border-slate-100 dark:border-slate-700'}
@@ -341,7 +341,7 @@ const Inventory = () => {
                                     key={sub}
                                     onClick={() => setSelectedSubcategory(sub)}
                                     className={`
-                                        whitespace-nowrap px-4 py-1.5 rounded-xl text-[10px] font-bold transition-all active:scale-95
+                                        whitespace-nowrap px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95
                                         ${selectedSubcategory === sub
                                             ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
                                             : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}
@@ -362,9 +362,9 @@ const Inventory = () => {
                                 <div className="flex items-center justify-between px-2">
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                                        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">{category}</h2>
+                                        <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">{category}</h2>
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400">{products.length} {products.length === 1 ? 'ítem' : 'ítems'}</span>
+                                    <span className="text-[11px] font-bold text-slate-400">{products.length} {products.length === 1 ? 'ítem' : 'ítems'}</span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -382,30 +382,30 @@ const Inventory = () => {
                                                             className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${product.isNewArrival ? 'bg-amber-100 text-amber-500 hover:bg-amber-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-500 hover:bg-amber-50'}`}
                                                             title={product.isNewArrival ? 'Quitar de Novedades' : 'Marcar como Novedad'}
                                                         >
-                                                            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: product.isNewArrival ? "'FILL' 1" : "'FILL' 0" }}>star</span>
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: product.isNewArrival ? "'FILL' 1" : "'FILL' 0" }}>star</span>
                                                         </button>
                                                         <Link
                                                             to={`/admin/edit/${product.id}`}
                                                             className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
                                                         >
-                                                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
                                                         </Link>
                                                         <button
                                                             onClick={() => handleDeleteProduct(product.id, product.name)}
                                                             className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/10 text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                                                         >
-                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                                                         </button>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 mb-2">
                                                     {product.availableStock === 0 ? (
-                                                        <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-black">AGOTADO</span>
+                                                        <span className="text-[11px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold">AGOTADO</span>
                                                     ) : product.availableStock < 5 ? (
-                                                        <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-black">STOCK BAJO</span>
+                                                        <span className="text-[11px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-bold">STOCK BAJO</span>
                                                     ) : (
-                                                        <span className="text-[10px] bg-primary/10 dark:bg-primary/20 text-primary-dark dark:text-primary px-2 py-0.5 rounded-full font-black">STOCK OK</span>
+                                                        <span className="text-[11px] bg-primary/10 dark:bg-primary/20 text-primary-dark dark:text-primary px-2 py-0.5 rounded-full font-bold">STOCK OK</span>
                                                     )}
                                                 </div>
 
@@ -421,20 +421,20 @@ const Inventory = () => {
                                                 </div>
 
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-black text-slate-900 dark:text-white">$ {product.price.toFixed(2)}</span>
+                                                    <span className="text-sm font-bold text-slate-900 dark:text-white">$ {product.price.toFixed(2)}</span>
                                                     <div className="flex items-center bg-white dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
                                                         <button
                                                             onClick={() => handleAdjustStock(product.id, false)}
                                                             className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
                                                         >
-                                                            <span className="material-symbols-outlined text-base">remove</span>
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-base">remove</span>
                                                         </button>
-                                                        <span className="w-14 text-center font-black text-[10px] tracking-tighter">{formatWeight(product.availableStock, product.isFractional)}</span>
+                                                        <span className="w-14 text-center font-bold text-[11px] tracking-tighter">{formatWeight(product.availableStock, product.isFractional)}</span>
                                                         <button
                                                             onClick={() => handleAdjustStock(product.id, true)}
                                                             className="w-9 h-9 flex items-center justify-center bg-primary text-slate-900 rounded-lg shadow-sm hover:brightness-110 active:scale-90 transition-all"
                                                         >
-                                                            <span className="material-symbols-outlined text-base font-black">add</span>
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-base font-bold">add</span>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -446,7 +446,7 @@ const Inventory = () => {
                         ))
                     ) : (
                         <div className="py-20 text-center opacity-30">
-                            <span className="material-symbols-outlined text-6xl mb-2">search_off</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-6xl mb-2">search_off</span>
                             <p>No hay productos en esta categoría</p>
                         </div>
                     )}
@@ -457,23 +457,23 @@ const Inventory = () => {
             <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-background-dark/95 backdrop-blur-lg px-6 pb-6 pt-3 z-50">
                 <div className="flex justify-between items-center max-w-7xl mx-auto">
                     <Link to="/admin" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                        <span className="material-symbols-outlined text-[28px]">bar_chart</span>
-                        <span className="text-[10px] font-medium">Panel</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]">bar_chart</span>
+                        <span className="text-[11px] font-medium">Panel</span>
                     </Link>
                     <Link to="/admin/orders" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors relative">
-                        <span className="material-symbols-outlined text-[28px]">assignment</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]">assignment</span>
                         {state.hasUnreadOrders && (
                             <span className="absolute top-0 right-1/2 translate-x-3 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-background-dark rounded-full animate-pulse"></span>
                         )}
-                        <span className="text-[10px] font-medium">Pedidos</span>
+                        <span className="text-[11px] font-medium">Pedidos</span>
                     </Link>
                     <Link to="/admin/inventory" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-900 dark:text-primary group">
-                        <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>inventory_2</span>
-                        <span className="text-[10px] font-bold">Inventario</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>inventory_2</span>
+                        <span className="text-[11px] font-bold">Inventario</span>
                     </Link>
                     <Link to="/admin/upload" className="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                        <span className="material-symbols-outlined text-[28px]">add_circle</span>
-                        <span className="text-[10px] font-medium">Nuevo</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[28px]">add_circle</span>
+                        <span className="text-[11px] font-medium">Nuevo</span>
                     </Link>
                 </div>
             </nav>
@@ -490,10 +490,10 @@ const Inventory = () => {
                         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-primary">upload_file</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-primary">upload_file</span>
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-left">Importar Stock</h2>
+                                    <h2 className="text-lg font-bold text-left">Importar Stock</h2>
                                     <p className="text-[11px] text-slate-400 text-left">Desde archivo fiscal (.xlsx)</p>
                                 </div>
                             </div>
@@ -502,7 +502,7 @@ const Inventory = () => {
                                 disabled={isImporting}
                                 className={`w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-opacity ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                <span className="material-symbols-outlined text-lg">close</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-lg">close</span>
                             </button>
                         </div>
 
@@ -532,7 +532,7 @@ const Inventory = () => {
                                             if (file) handleFileSelected(file);
                                         }}
                                     />
-                                    <span className="material-symbols-outlined text-5xl text-primary/60 mb-3 block">cloud_upload</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-5xl text-primary/60 mb-3 block">cloud_upload</span>
                                     <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
                                         {isDragging ? '¡Soltar archivo aquí!' : 'Arrastrá o tocá para seleccionar'}
                                     </p>
@@ -547,7 +547,7 @@ const Inventory = () => {
                                         <div className="flex flex-col items-center justify-center py-10 px-4 space-y-6 animate-in fade-in duration-300">
                                             <div className="relative flex items-center justify-center">
                                                 <div className="w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-800 border-t-primary animate-spin"></div>
-                                                <span className="absolute text-lg font-black text-slate-800 dark:text-slate-200">{importProgress}%</span>
+                                                <span className="absolute text-lg font-bold text-slate-800 dark:text-slate-200">{importProgress}%</span>
                                             </div>
                                             <div className="text-center space-y-2">
                                                 <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Importando inventario...</p>
@@ -573,7 +573,7 @@ const Inventory = () => {
                                             onClick={() => { setImportData(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                                             className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
                                         >
-                                            <span className="material-symbols-outlined text-sm">refresh</span>
+                                            <span aria-hidden="true" className="material-symbols-outlined text-sm">refresh</span>
                                             Otro archivo
                                         </button>
                                     </div>
@@ -583,10 +583,10 @@ const Inventory = () => {
                                         <table className="w-full text-xs">
                                             <thead>
                                                 <tr className="bg-slate-50 dark:bg-slate-800/50">
-                                                    <th className="px-3 py-2 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px]">Código</th>
-                                                    <th className="px-3 py-2 text-left font-bold text-slate-500 uppercase tracking-widest text-[10px]">Nombre</th>
-                                                    <th className="px-3 py-2 text-right font-bold text-slate-500 uppercase tracking-widest text-[10px]">Stock</th>
-                                                    <th className="px-3 py-2 text-right font-bold text-slate-500 uppercase tracking-widest text-[10px]">Precio</th>
+                                                    <th className="px-3 py-2 text-left font-bold text-slate-500 uppercase tracking-widest text-[11px]">Código</th>
+                                                    <th className="px-3 py-2 text-left font-bold text-slate-500 uppercase tracking-widest text-[11px]">Nombre</th>
+                                                    <th className="px-3 py-2 text-right font-bold text-slate-500 uppercase tracking-widest text-[11px]">Stock</th>
+                                                    <th className="px-3 py-2 text-right font-bold text-slate-500 uppercase tracking-widest text-[11px]">Precio</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -618,26 +618,26 @@ const Inventory = () => {
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-green-500 text-2xl">check_circle</span>
+                                            <span aria-hidden="true" className="material-symbols-outlined text-green-500 text-2xl">check_circle</span>
                                         </div>
                                         <div>
-                                            <p className="text-lg font-black text-left">¡Importación completa!</p>
+                                            <p className="text-lg font-bold text-left">¡Importación completa!</p>
                                             <p className="text-[11px] text-slate-400 text-left">El inventario se actualizó correctamente</p>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-3 gap-3">
                                         <div className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-4 text-center">
-                                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{importResult.updated}</p>
-                                            <p className="text-[10px] font-bold text-blue-500 uppercase mt-1">Actualizados</p>
+                                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{importResult.updated}</p>
+                                            <p className="text-[11px] font-bold text-blue-500 uppercase mt-1">Actualizados</p>
                                         </div>
                                         <div className="bg-green-50 dark:bg-green-900/10 rounded-2xl p-4 text-center">
-                                            <p className="text-2xl font-black text-green-600 dark:text-green-400">{importResult.created}</p>
-                                            <p className="text-[10px] font-bold text-green-500 uppercase mt-1">Nuevos</p>
+                                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{importResult.created}</p>
+                                            <p className="text-[11px] font-bold text-green-500 uppercase mt-1">Nuevos</p>
                                         </div>
                                         <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-4 text-center">
-                                            <p className="text-2xl font-black text-red-600 dark:text-red-400">{importResult.errors.length}</p>
-                                            <p className="text-[10px] font-bold text-red-500 uppercase mt-1">Errores</p>
+                                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{importResult.errors.length}</p>
+                                            <p className="text-[11px] font-bold text-red-500 uppercase mt-1">Errores</p>
                                         </div>
                                     </div>
 
@@ -667,7 +667,7 @@ const Inventory = () => {
                                         onClick={handleImport}
                                         disabled={!importData || importData.rows.length === 0 || isImporting}
                                         className={`
-                                            flex-1 py-3 rounded-2xl text-sm font-black flex items-center justify-center gap-2 transition-all
+                                            flex-1 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all
                                             ${importData && importData.rows.length > 0 && !isImporting
                                                 ? 'bg-primary text-slate-900 shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95'
                                                 : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}
@@ -675,12 +675,12 @@ const Inventory = () => {
                                     >
                                         {isImporting ? (
                                             <>
-                                                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                                                <span aria-hidden="true" className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
                                                 Importando...
                                             </>
                                         ) : (
                                             <>
-                                                <span className="material-symbols-outlined text-lg">cloud_upload</span>
+                                                <span aria-hidden="true" className="material-symbols-outlined text-lg">cloud_upload</span>
                                                 Aplicar Cambios
                                             </>
                                         )}
@@ -689,7 +689,7 @@ const Inventory = () => {
                             ) : (
                                 <button
                                     onClick={closeImportModal}
-                                    className="flex-1 py-3 rounded-2xl text-sm font-black bg-primary text-slate-900 shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
+                                    className="flex-1 py-3 rounded-2xl text-sm font-bold bg-primary text-slate-900 shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
                                 >
                                     Cerrar
                                 </button>

@@ -46,15 +46,15 @@ const SuggestionsAdmin = () => {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 min-h-screen pb-24 italic-none">
+        <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 min-h-screen pb-24 not-italic">
             <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 pt-6 pb-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Link to="/admin" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <span className="material-symbols-outlined">arrow_back</span>
+                        <span aria-hidden="true" className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <h1 className="text-xl font-bold flex-1 text-center"><span className="text-primary mr-1">#CHIA</span> Sugerencias</h1>
                     <button onClick={loadSuggestions} className="p-2 -mr-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <span className="material-symbols-outlined">refresh</span>
+                        <span aria-hidden="true" className="material-symbols-outlined">refresh</span>
                     </button>
                 </div>
             </header>
@@ -62,16 +62,16 @@ const SuggestionsAdmin = () => {
             <main className="max-w-4xl mx-auto px-4 py-8">
                 {isLoading ? (
                     <div className="flex justify-center items-center py-20">
-                        <span className="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+                        <span aria-hidden="true" className="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
                     </div>
                 ) : suggestions.length > 0 ? (
                     <div className="space-y-4">
                         <div className="flex items-center justify-between mb-6 px-2">
                             <div>
-                                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Pedidos de clientes</h2>
+                                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">Pedidos de clientes</h2>
                                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Ordenado por popularidad</p>
                             </div>
-                            <span className="text-xl font-black text-primary">{suggestions.length}</span>
+                            <span className="text-xl font-bold text-primary">{suggestions.length}</span>
                         </div>
 
                         <AnimatePresence mode='popLayout'>
@@ -86,7 +86,7 @@ const SuggestionsAdmin = () => {
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center shrink-0">
-                                            <span className="text-xl font-black text-slate-900 dark:text-white">{s.count}</span>
+                                            <span className="text-xl font-bold text-slate-900 dark:text-white">{s.count}</span>
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-slate-900 dark:text-white capitalize">{s.text}</h3>
@@ -97,7 +97,7 @@ const SuggestionsAdmin = () => {
                                         onClick={() => handleDelete(s.id, s.text)}
                                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/10 text-red-300 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all"
                                     >
-                                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                                        <span aria-hidden="true" className="material-symbols-outlined text-[20px]">delete</span>
                                     </button>
                                 </motion.div>
                             ))}
@@ -105,7 +105,7 @@ const SuggestionsAdmin = () => {
                     </div>
                 ) : (
                     <div className="py-20 text-center opacity-30 flex flex-col items-center">
-                        <span className="material-symbols-outlined text-6xl mb-4">volunteer_activism</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-6xl mb-4">volunteer_activism</span>
                         <p className="font-bold">Aún no hay sugerencias de clientes</p>
                     </div>
                 )}

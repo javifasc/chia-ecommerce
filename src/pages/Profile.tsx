@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import BottomNav from '../components/BottomNav';
 import { useAuth, ProfileData } from '../context/AuthContext';
 import { useStore, Product } from '../context/StoreContext';
 
@@ -73,26 +74,26 @@ const Profile = () => {
     }
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen pb-24 relative selection:bg-primary italic-none">
-            <header className="sticky top-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen pb-28 relative selection:bg-primary not-italic">
+            <header className="sticky top-0 z-40 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-5 pt-safe-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between">
-                    <Link to="/shop" className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-transform">
-                        <span className="material-symbols-outlined text-slate-800 dark:text-white" style={{ fontSize: '20px' }}>arrow_back</span>
+                    <Link to="/shop" aria-label="Volver a la tienda" className="w-11 h-11 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-transform">
+                        <span aria-hidden="true" className="material-symbols-outlined text-slate-800 dark:text-white" style={{ fontSize: '20px' }}>arrow_back</span>
                     </Link>
                     <h1 className="text-lg font-bold">Mi Perfil</h1>
-                    <div className="w-10"></div>
+                    <div className="w-11"></div>
                 </div>
             </header>
 
-            <main className="px-5 py-8 space-y-8 text-left">
+            <main className="px-5 py-8 space-y-8 text-left max-w-2xl mx-auto">
                 {!isAuthenticated ? (
                     /* Guest View */
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white dark:bg-slate-800 rounded-[40px] p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 text-center space-y-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-card p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 text-center space-y-4">
                             <div className="inline-flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary-dark">
-                                <span className="material-symbols-outlined text-5xl">account_circle</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-5xl">account_circle</span>
                             </div>
-                            <h2 className="text-2xl font-black tracking-tight">Únete a #CHIA</h2>
+                            <h2 className="text-2xl font-bold tracking-tight">Únete a #CHIA</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Regístrate para guardar tus datos de envío y agilizar tus próximas compras.</p>
                             <div className="pt-4 space-y-3">
                                 <Link to="/login" className="block w-full bg-primary text-slate-900 font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">
@@ -110,39 +111,41 @@ const Profile = () => {
                         <div className="flex items-start justify-between p-2">
                             <div className="flex items-center gap-5">
                                 <div className="relative">
-                                    <div className="w-20 h-20 rounded-[32px] bg-primary/20 overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-xl">
+                                    <div className="w-20 h-20 rounded-2xl bg-primary/20 overflow-hidden ring-4 ring-white dark:ring-slate-800 shadow-xl">
                                         {profile?.avatar_url ? (
                                             <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-primary-dark opacity-30">
-                                                <span className="material-symbols-outlined text-4xl">person</span>
+                                                <span aria-hidden="true" className="material-symbols-outlined text-4xl">person</span>
                                             </div>
                                         )}
                                     </div>
                                     <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-white dark:bg-slate-700 rounded-full flex items-center justify-center shadow-md border border-slate-50 dark:border-slate-600">
-                                        <span className="material-symbols-outlined text-primary-dark text-lg">verified</span>
+                                        <span aria-hidden="true" className="material-symbols-outlined text-primary-dark text-lg">verified</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-black tracking-tight leading-tight">{profile?.full_name || 'Usuario #CHIA'}</h2>
-                                    <p className="text-xs text-sage font-bold tracking-wider uppercase">{profile?.email}</p>
+                                    <h2 className="text-2xl font-bold tracking-tight leading-tight">{profile?.full_name || 'Usuario #CHIA'}</h2>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wider uppercase">{profile?.email}</p>
                                 </div>
                             </div>
-                            <button 
+                            <button
+                                type="button"
+                                aria-label={isEditing ? 'Cancelar edición' : 'Editar perfil'}
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`size-10 rounded-full flex items-center justify-center transition-colors ${isEditing ? 'bg-primary text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}
+                                className={`size-11 rounded-full flex items-center justify-center transition-colors ${isEditing ? 'bg-primary text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}
                             >
-                                <span className="material-symbols-outlined text-xl">{isEditing ? 'close' : 'edit'}</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-xl">{isEditing ? 'close' : 'edit'}</span>
                             </button>
                         </div>
 
                         {isEditing ? (
                             /* Edit Mode */
                             <section className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-dark mb-2">Datos de Entrega</h3>
+                                <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-dark mb-2">Datos de Entrega</h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Nombre Completo</label>
+                                        <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Nombre Completo</label>
                                         <input 
                                             type="text" 
                                             value={editForm.full_name || ''} 
@@ -151,7 +154,7 @@ const Profile = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">WhatsApp</label>
+                                        <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">WhatsApp</label>
                                         <input 
                                             type="tel" 
                                             value={editForm.phone || ''} 
@@ -161,7 +164,7 @@ const Profile = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Dirección (Rada Tilly)</label>
+                                        <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Dirección (Rada Tilly)</label>
                                         <input 
                                             type="text" 
                                             value={editForm.address || ''} 
@@ -183,13 +186,13 @@ const Profile = () => {
                             /* Info Summary */
                             <section className="grid grid-cols-2 gap-3">
                                 <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                                    <span className="material-symbols-outlined text-primary-dark text-lg mb-2">local_shipping</span>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Dirección</p>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-primary-dark text-lg mb-2">local_shipping</span>
+                                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">Dirección</p>
                                     <p className="text-xs font-bold truncate">{profile?.address || 'No configurada'}</p>
                                 </div>
                                 <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                                    <span className="material-symbols-outlined text-primary-dark text-lg mb-2">call</span>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Teléfono</p>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-primary-dark text-lg mb-2">call</span>
+                                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">Teléfono</p>
                                     <p className="text-xs font-bold truncate">{profile?.phone || 'No configurado'}</p>
                                 </div>
                             </section>
@@ -200,14 +203,14 @@ const Profile = () => {
                 {/* Menu Groups */}
                 <div className="space-y-6">
                     <section>
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 px-2">Actividad</h3>
+                        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-3 px-2">Actividad</h3>
                         <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700">
                             <Link to="/my-orders" className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-slate-400">assignment</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-slate-400">assignment</span>
                                     <span className="text-sm font-bold">Mis Reservas</span>
                                 </div>
-                                <span className="material-symbols-outlined text-slate-300">chevron_right</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-slate-300">chevron_right</span>
                             </Link>
                             <div className="h-px bg-slate-50 dark:bg-slate-700" />
                             <button
@@ -215,10 +218,10 @@ const Profile = () => {
                                 className={`w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left ${showFavorites ? 'bg-slate-50 dark:bg-slate-700/30' : ''}`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <span className={`material-symbols-outlined ${showFavorites ? 'text-primary' : 'text-slate-400'}`}>favorite</span>
+                                    <span aria-hidden="true" className={`material-symbols-outlined ${showFavorites ? 'text-primary' : 'text-slate-400'}`}>favorite</span>
                                     <span className="text-sm font-bold">Favoritos ({favoriteProducts.length})</span>
                                 </div>
-                                <span className={`material-symbols-outlined text-slate-300 transition-transform ${showFavorites ? 'rotate-90' : ''}`}>chevron_right</span>
+                                <span aria-hidden="true" className={`material-symbols-outlined text-slate-300 transition-transform ${showFavorites ? 'rotate-90' : ''}`}>chevron_right</span>
                             </button>
                         </div>
 
@@ -237,9 +240,10 @@ const Profile = () => {
                                                                 e.preventDefault();
                                                                 handleToggleFavorite(p.id);
                                                             }}
-                                                            className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-primary text-slate-900 backdrop-blur shadow-sm transition-all"
+                                                            aria-label={`Quitar ${p.name} de favoritos`}
+                                                            className="absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center bg-primary text-slate-900 backdrop-blur shadow-sm transition-all"
                                                         >
-                                                            <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                                                         </button>
                                                     </div>
                                                     <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">{p.name}</h3>
@@ -252,7 +256,7 @@ const Profile = () => {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center py-10 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
-                                        <span className="material-symbols-outlined text-slate-300 text-4xl mb-2">favorite</span>
+                                        <span aria-hidden="true" className="material-symbols-outlined text-slate-300 text-4xl mb-2">favorite</span>
                                         <p className="text-xs text-slate-400 font-medium">No tienes productos guardados</p>
                                     </div>
                                 )}
@@ -266,7 +270,7 @@ const Profile = () => {
                                 onClick={logout}
                                 className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-4 rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-transform mb-4"
                             >
-                                <span className="material-symbols-outlined text-lg">logout</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-lg">logout</span>
                                 Cerrar Sesión
                             </button>
                         </section>
@@ -281,41 +285,13 @@ const Profile = () => {
                     >
                         <img src="/logo.png" alt="#CHIA" className="w-full h-full object-contain" />
                     </button>
-                    <p className="text-[10px] text-slate-300 dark:text-slate-700 font-medium tracking-widest uppercase select-none">
+                    <p className="text-[11px] text-slate-300 dark:text-slate-700 font-medium tracking-widest uppercase select-none">
                         Versión 1.1.0 - #CHIA
                     </p>
                 </div>
             </main>
 
-            {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 w-full bg-white/90 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 pb-safe pt-2 z-50">
-                <div className="flex justify-around items-center px-2 h-16">
-                    <Link to="/shop" className="flex flex-col items-center justify-center gap-1 w-16 group text-sage">
-                        <div className="relative p-1.5 rounded-xl transition-colors">
-                            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>home</span>
-                        </div>
-                        <span className="text-[10px] font-medium">Inicio</span>
-                    </Link>
-                    <Link to="/catalog" className="flex flex-col items-center justify-center gap-1 w-16 group text-sage">
-                        <div className="relative p-1.5 rounded-xl transition-colors">
-                            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>manage_search</span>
-                        </div>
-                        <span className="text-[10px] font-medium">Catálogo</span>
-                    </Link>
-                    <Link to="/my-orders" className="flex flex-col items-center justify-center gap-1 w-16 group text-sage">
-                        <div className="relative p-1.5 rounded-xl transition-colors">
-                            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>assignment</span>
-                        </div>
-                        <span className="text-[10px] font-medium">Pedidos</span>
-                    </Link>
-                    <Link to="/profile" className="flex flex-col items-center justify-center gap-1 w-16 group text-slate-900 dark:text-primary">
-                        <div className="relative p-1.5 rounded-xl bg-primary/20 transition-colors border border-primary/10">
-                            <span className="material-symbols-outlined" style={{ fontSize: '24px', fontVariationSettings: "'FILL' 1" }}>person</span>
-                        </div>
-                        <span className="text-[10px] font-bold">Perfil</span>
-                    </Link>
-                </div>
-            </nav>
+            <BottomNav />
         </div>
     );
 };

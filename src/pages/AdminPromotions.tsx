@@ -80,10 +80,10 @@ const AdminPromotions = () => {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased min-h-screen pb-24 max-w-md mx-auto shadow-2xl relative italic-none">
-            <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 border-b border-slate-200 dark:border-slate-800 pt-12">
+        <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased min-h-screen pb-24 max-w-md mx-auto shadow-2xl relative not-italic">
+            <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] border-b border-slate-200 dark:border-slate-800">
                 <Link to="/admin" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-slate-800 active:scale-95 transition-transform">
-                    <span className="material-symbols-outlined text-2xl">arrow_back</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-2xl">arrow_back</span>
                 </Link>
                 <h1 className="text-lg font-bold tracking-tight">Editar Portada</h1>
                 <button onClick={handleSavePromos} className="text-sm font-bold text-primary px-2 py-1">Guardar</button>
@@ -93,25 +93,25 @@ const AdminPromotions = () => {
                 {/* Hero Section Edit */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="material-symbols-outlined text-primary">view_carousel</span>
-                        <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Banner Principal (NOVEDAD)</h2>
+                        <span aria-hidden="true" className="material-symbols-outlined text-primary">view_carousel</span>
+                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Banner Principal (NOVEDAD)</h2>
                     </div>
 
                     {/* LIVE PREVIEW: HERO */}
                     <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previsualización en Vivo</p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previsualización en Vivo</p>
                         <div className="relative w-full rounded-2xl overflow-hidden aspect-[16/9] shadow-md border border-slate-100 dark:border-slate-800">
                             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent z-10"></div>
                             <img alt="Hero Preview" className="w-full h-full object-cover" src={heroImage || "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1074&auto=format&fit=crop"}
                                 onError={(e) => (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1074&auto=format&fit=crop"}
                             />
                             <div className="absolute bottom-0 left-0 p-4 z-20 w-3/4 text-left">
-                                <span className="inline-block px-2 py-0.5 bg-primary text-slate-900 text-[10px] font-bold rounded-md mb-1">{heroTag || 'Etiqueta'}</span>
+                                <span className="inline-block px-2 py-0.5 bg-primary text-slate-900 text-[11px] font-bold rounded-md mb-1">{heroTag || 'Etiqueta'}</span>
                                 <h2 className="text-lg font-bold text-white mb-1 leading-tight">{heroTitle || 'Título del Banner'}</h2>
                                 <p className="text-white/90 text-xs mb-3 font-medium line-clamp-2">{heroDescription || 'Descripción de la promoción...'}</p>
-                                <div className="bg-white text-slate-900 px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm inline-flex items-center gap-1.5 cursor-default">
+                                <div className="bg-white text-slate-900 px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm inline-flex items-center gap-1.5 cursor-default">
                                     {heroButton || 'Botón'}
-                                    <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>arrow_forward</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '12px' }}>arrow_forward</span>
                                 </div>
                             </div>
                         </div>
@@ -120,10 +120,10 @@ const AdminPromotions = () => {
                     <div className="space-y-4 bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <div className="space-y-1">
                             <div className="flex justify-between items-end">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Imagen del Banner</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase">Imagen del Banner</label>
                                 <button
                                     onClick={() => heroFileInputRef.current?.click()}
-                                    className="text-[10px] font-black text-primary uppercase"
+                                    className="text-[11px] font-bold text-primary uppercase"
                                 >
                                     Subir Archivo
                                 </button>
@@ -139,20 +139,20 @@ const AdminPromotions = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Etiqueta</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase">Etiqueta</label>
                                 <input value={heroTag} onChange={(e) => setHeroTag(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="Ej: Novedad" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Texto Botón</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase">Texto Botón</label>
                                 <input value={heroButton} onChange={(e) => setHeroButton(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="Ej: Comprar" />
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Título</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">Título</label>
                             <input value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="Título del banner..." />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Descripción</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">Descripción</label>
                             <textarea value={heroDescription} onChange={(e) => setHeroDescription(e.target.value)} rows={2} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Descripción corta..."></textarea>
                         </div>
                     </div>
@@ -161,13 +161,13 @@ const AdminPromotions = () => {
                 {/* Featured Section Edit */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="material-symbols-outlined text-primary">local_offer</span>
-                        <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Oferta Destacada</h2>
+                        <span aria-hidden="true" className="material-symbols-outlined text-primary">local_offer</span>
+                        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Oferta Destacada</h2>
                     </div>
 
                     {/* LIVE PREVIEW: FEATURED */}
                     <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previsualización en Vivo ({featSectionTitle || 'Sección'})</p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previsualización en Vivo ({featSectionTitle || 'Sección'})</p>
                         <div className="bg-sage-light/30 dark:bg-slate-800/50 rounded-2xl p-3 flex items-center gap-3 text-left border border-slate-100 dark:border-slate-800">
                             <div className="w-16 h-16 bg-white dark:bg-slate-700 rounded-xl flex-shrink-0 overflow-hidden p-1.5 shadow-sm">
                                 <img alt="Featured Preview" className="w-full h-full object-contain" src={featItemImage || "https://images.unsplash.com/photo-1544306094-e2dca9f57142?q=80&w=600&auto=format&fit=crop"}
@@ -176,31 +176,31 @@ const AdminPromotions = () => {
                             </div>
                             <div className="flex-1">
                                 <h4 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">{featItemTitle || 'Nombre del Producto'}</h4>
-                                <p className="text-[10px] text-sage-700 dark:text-white/70 mt-0.5 mb-1.5 line-clamp-1">{featItemDesc || 'Descripción corta...'}</p>
+                                <p className="text-[11px] text-slate-600 dark:text-white/70 mt-0.5 mb-1.5 line-clamp-1">{featItemDesc || 'Descripción corta...'}</p>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-primary-dark dark:text-primary font-black text-sm">${parseFloat(featPrice || '0').toFixed(2)}</span>
+                                    <span className="text-primary-dark dark:text-primary font-bold text-sm">${parseFloat(featPrice || '0').toFixed(2)}</span>
                                     {parseFloat(featOldPrice || '0') > 0 && (
-                                        <span className="text-slate-400 text-[10px] line-through font-medium">${parseFloat(featOldPrice || '0').toFixed(2)}</span>
+                                        <span className="text-slate-400 text-[11px] line-through font-medium">${parseFloat(featOldPrice || '0').toFixed(2)}</span>
                                     )}
                                 </div>
                             </div>
                             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-slate-900 shadow-sm cursor-default">
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                                <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-4 bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Título de la Sección</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">Título de la Sección</label>
                             <input value={featSectionTitle} onChange={(e) => setFeatSectionTitle(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="Ej: Ofertas Frescas" />
                         </div>
                         <div className="space-y-1">
                             <div className="flex justify-between items-end">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Imagen del Item</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase">Imagen del Item</label>
                                 <button
                                     onClick={() => featFileInputRef.current?.click()}
-                                    className="text-[10px] font-black text-primary uppercase"
+                                    className="text-[11px] font-bold text-primary uppercase"
                                 >
                                     Subir Archivo
                                 </button>
@@ -215,20 +215,20 @@ const AdminPromotions = () => {
                             <input value={featItemImage} onChange={(e) => setFeatItemImage(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="URL o Base64..." />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Nombre del Producto</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">Nombre del Producto</label>
                             <input value={featItemTitle} onChange={(e) => setFeatItemTitle(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="Nombre..." />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Descripción Corta</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">Descripción Corta</label>
                             <input value={featItemDesc} onChange={(e) => setFeatItemDesc(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="Ej: Pack de jugos naturales" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Precio Promo</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase">Precio Promo</label>
                                 <input type="number" value={featPrice} onChange={(e) => setFeatPrice(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Precio Original</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase">Precio Original</label>
                                 <input type="number" value={featOldPrice} onChange={(e) => setFeatOldPrice(e.target.value)} className="w-full rounded-lg bg-slate-50 dark:bg-slate-800 py-3 px-3 text-xs outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" />
                             </div>
                         </div>

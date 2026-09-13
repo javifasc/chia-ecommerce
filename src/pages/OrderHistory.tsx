@@ -7,11 +7,11 @@ const OrderHistory = () => {
     const totalEarnings = state.historyOrders.reduce((sum, order) => sum + order.total, 0);
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 min-h-screen pb-24 relative italic-none">
+        <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 min-h-screen pb-24 relative not-italic">
             <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 pt-6 pb-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Link to="/admin/orders" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <span className="material-symbols-outlined">arrow_back</span>
+                        <span aria-hidden="true" className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <h1 className="text-xl font-bold flex-1 text-center"><span className="text-primary mr-1">#CHIA</span> Historial</h1>
                     <div className="w-10"></div>
@@ -22,12 +22,12 @@ const OrderHistory = () => {
                 {/* Earnings Summary */}
                 <div className="p-6 bg-primary/10 dark:bg-primary/20 border border-primary/20 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-primary-dark dark:text-primary/70 mb-1">Ingresos Totales (Histórico)</p>
-                        <p className="text-4xl font-black text-slate-900 dark:text-white">$ {totalEarnings.toFixed(2)}</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-primary-dark dark:text-primary/70 mb-1">Ingresos Totales (Histórico)</p>
+                        <p className="text-4xl font-bold text-slate-900 dark:text-white">$ {totalEarnings.toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-slate-900 shadow-lg shadow-primary/20">
-                            <span className="material-symbols-outlined text-2xl font-black">payments</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-2xl font-bold">payments</span>
                         </div>
                     </div>
                 </div>
@@ -35,7 +35,7 @@ const OrderHistory = () => {
                 {/* History List */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
-                        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Registros ({state.historyOrders.length})</h2>
+                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Registros ({state.historyOrders.length})</h2>
                     </div>
 
                     {state.historyOrders.length > 0 ? (
@@ -53,23 +53,23 @@ const OrderHistory = () => {
                                             </div>
                                             <h3 className="font-bold text-slate-900 dark:text-slate-100">{order.customerName}</h3>
                                         </div>
-                                        <span className="text-lg font-black text-slate-900 dark:text-white">$ {order.total.toFixed(2)}</span>
+                                        <span className="text-lg font-bold text-slate-900 dark:text-white">$ {order.total.toFixed(2)}</span>
                                     </div>
 
                                     <div className="space-y-1.5 pt-4 border-t border-slate-50 dark:border-slate-800/50">
                                         <div className="flex flex-col gap-1 mb-3">
                                             <div className="flex items-center gap-1.5">
-                                                <span className="material-symbols-outlined text-[14px] text-slate-400">
+                                                <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-slate-400">
                                                     {order.deliveryMethod === 'Envío' ? 'local_shipping' : 'storefront'}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">
                                                     {order.deliveryMethod === 'Envío' ? `Envío: ${order.deliveryZone}` : 'Retiro en Local'}
                                                 </span>
                                             </div>
                                             {order.deliveryMethod === 'Envío' && order.address && (
                                                 <div className="flex items-start gap-1.5">
-                                                    <span className="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
-                                                    <span className="text-[10px] font-medium text-slate-400 leading-tight">
+                                                    <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
+                                                    <span className="text-[11px] font-medium text-slate-400 leading-tight">
                                                         {order.address}
                                                     </span>
                                                 </div>
@@ -89,7 +89,7 @@ const OrderHistory = () => {
                         </div>
                     ) : (
                         <div className="py-20 text-center opacity-30">
-                            <span className="material-symbols-outlined text-6xl mb-2">history_toggle_off</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-6xl mb-2">history_toggle_off</span>
                             <p className="text-sm font-medium">No hay registros históricos todavía</p>
                         </div>
                     )}

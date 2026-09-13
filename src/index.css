@@ -6,6 +6,12 @@
   body {
     @apply antialiased;
   }
+
+  /* Anillo de foco visible y consistente para navegación por teclado.
+     No aparece al hacer click/tap, así que no ensucia la UI táctil. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background-light dark:ring-offset-background-dark;
+  }
 }
 
 @layer utilities {
@@ -15,5 +21,32 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Respeta el indicador de home del iPhone en las barras fijas inferiores. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top, 0px);
+  }
+  /* Safe area + aire base, para cabeceras sin contenedor interno propio. */
+  .pt-safe-4 {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  }
+}
+
+/* Respeta la preferencia del sistema de reducir movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
