@@ -103,6 +103,46 @@ const LandingPage = () => {
                                 Nuestra Filosofía
                             </a>
                         </motion.div>
+
+                        {/* Contacto directo: visible en la primera pantalla, pero sin peso de
+                            botón relleno para no competir con el CTA de la tienda. */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.45 }}
+                            className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3"
+                        >
+                            <a
+                                href={INSTAGRAM_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Seguinos en Instagram, @${INSTAGRAM_USER}`}
+                                className="group flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:text-primary-dark dark:hover:text-primary transition-colors"
+                            >
+                                <InstagramIcon className="w-5 h-5" />
+                                <span className="border-b border-transparent group-hover:border-current">Instagram</span>
+                            </a>
+                            <a
+                                href={WHATSAPP_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Escribinos por WhatsApp"
+                                className="group flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:text-primary-dark dark:hover:text-primary transition-colors"
+                            >
+                                <WhatsAppIcon className="w-5 h-5" />
+                                <span className="border-b border-transparent group-hover:border-current">WhatsApp</span>
+                            </a>
+                            <a
+                                href={MAPS_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Ver la ubicación del local en Google Maps"
+                                className="group flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:text-primary-dark dark:hover:text-primary transition-colors"
+                            >
+                                <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: '20px' }}>location_on</span>
+                                <span className="border-b border-transparent group-hover:border-current">Cómo llegar</span>
+                            </a>
+                        </motion.div>
                     </div>
                 </div>
             </section>
