@@ -1,0 +1,119 @@
+<!--
+  Plantilla "Confirm signup" de Supabase para #CHIA Almacén Natural.
+
+  Dónde se pega: Dashboard > Authentication > Emails > Confirm signup.
+  Variables disponibles (sintaxis Go, NO borrar las llaves dobles):
+    {{ .ConfirmationURL }}  enlace de confirmación
+    {{ .Email }}            correo del usuario
+    {{ .SiteURL }}          Site URL configurada en Supabase
+    {{ .Token }}            código de 6 dígitos, por si se prefiere OTP
+
+  Reglas de HTML para email: maquetado con <table>, estilos en línea y nada
+  de flex/grid ni <style> externo. Gmail y Outlook descartan casi todo lo demás.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fbf9f4;margin:0;padding:24px 12px;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e9ece5;">
+
+        <!-- Encabezado -->
+        <tr>
+          <td align="center" style="padding:40px 32px 8px 32px;">
+            <img src="https://chia-ecommerce.vercel.app/logo.png" width="72" height="72" alt="#CHIA" style="display:block;border:0;width:72px;height:auto;margin-bottom:20px;">
+            <h1 style="margin:0;font-size:26px;line-height:1.25;font-weight:800;color:#35322f;letter-spacing:-0.5px;">
+              Bienvenido a #CHIA
+            </h1>
+            <p style="margin:10px 0 0 0;font-size:15px;line-height:1.6;color:#5c5854;">
+              Solo falta un paso para activar tu cuenta.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Botón principal -->
+        <tr>
+          <td align="center" style="padding:32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" bgcolor="#51b800" style="border-radius:16px;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#1a1c18;text-decoration:none;border-radius:16px;">
+                    Confirmar mi cuenta
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Beneficios: los mismos tres que promete la pantalla de registro -->
+        <tr>
+          <td style="padding:0 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e9ece5;border-radius:20px;">
+              <tr>
+                <td style="padding:22px 24px;">
+                  <p style="margin:0 0 12px 0;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#5c5854;">
+                    Con tu cuenta vas a poder
+                  </p>
+                  <p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;color:#433e3a;">
+                    &bull;&nbsp; Reservar en segundos sin volver a cargar tus datos
+                  </p>
+                  <p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;color:#433e3a;">
+                    &bull;&nbsp; Ver el historial completo de tus pedidos
+                  </p>
+                  <p style="margin:0;font-size:14px;line-height:1.5;color:#433e3a;">
+                    &bull;&nbsp; Acceder a ofertas y preventas exclusivas
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Enlace de respaldo: algunos clientes de correo rompen el botón -->
+        <tr>
+          <td style="padding:28px 32px 0 32px;">
+            <p style="margin:0 0 6px 0;font-size:12px;line-height:1.5;color:#5c5854;">
+              Si el botón no funciona, copiá y pegá este enlace en tu navegador:
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.6;word-break:break-all;">
+              <a href="{{ .ConfirmationURL }}" style="color:#35800a;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Aviso de seguridad -->
+        <tr>
+          <td style="padding:24px 32px 32px 32px;">
+            <p style="margin:0;font-size:12px;line-height:1.6;color:#8c8884;border-top:1px solid #e9ece5;padding-top:20px;">
+              Si no creaste esta cuenta, podés ignorar este mensaje sin hacer nada.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+
+      <!-- Pie -->
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+        <tr>
+          <td align="center" style="padding:24px 32px;">
+            <p style="margin:0 0 8px 0;font-size:13px;font-weight:700;color:#433e3a;">
+              #CHIA &mdash; Almac&eacute;n Natural
+            </p>
+            <p style="margin:0 0 12px 0;font-size:12px;color:#8c8884;">
+              Rada Tilly, Chubut
+            </p>
+            <p style="margin:0;font-size:12px;">
+              <a href="https://www.instagram.com/chia_almacennatural_rada/" style="color:#35800a;text-decoration:none;font-weight:600;">Instagram</a>
+              <span style="color:#c9c5c0;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://wa.me/5492974174655" style="color:#35800a;text-decoration:none;font-weight:600;">WhatsApp</a>
+              <span style="color:#c9c5c0;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://chia-ecommerce.vercel.app/" style="color:#35800a;text-decoration:none;font-weight:600;">Tienda</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
