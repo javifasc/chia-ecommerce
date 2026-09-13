@@ -278,7 +278,7 @@ const StoreContext = createContext<{
 } | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { isAuthenticated, user, loading: authLoading } = useAuth();
+    const { isAuthenticated, user, isAdmin, loading: authLoading, profileLoading } = useAuth();
     const [state, dispatch] = useReducer(storeReducer, {
         isLoading: true,
         products: [],
@@ -404,11 +404,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // EFFECT 2 - load orders, runs when auth changes
     useEffect(() => {
-        if (authLoading) return;
+        if (authLoading || profileLoading) return;
 
         const loadOrders = async () => {
             try {
-                const isAdmin = window.location.pathname.startsWith('/admin');
                 if (isAdmin || user?.id) {
                     const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
                     dispatch({
@@ -428,9 +427,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         loadOrders();
 
+        // isAdmin sale del rol en profiles, no de la URL: antes alcanzaba con escribir
+        // /admin en la barra de direcciones para que la app pidiera todos los pedidos.
         // Los canales de pedidos solo le sirven al admin o a un usuario logueado. Sin este
         // filtro un visitante anónimo abría un websocket extra que nunca usaba.
-        const needsOrderUpdates = window.location.pathname.startsWith('/admin') || !!user?.id;
+        const needsOrderUpdates = isAdmin || !!user?.id;
         if (!needsOrderUpdates) return;
 
         // Subscribe to orders/items realtime updates
@@ -439,7 +440,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'orders' }, async (payload: any) => {
                 console.log('Realtime Order Change:', payload.eventType);
                 setTimeout(async () => {
-                    const isAdmin = window.location.pathname.startsWith('/admin');
                     if (isAdmin || user?.id) {
                         const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
                         dispatch({ type: 'SET_ORDERS', orders });
@@ -463,7 +463,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const itemsChannel = supabase
             .channel('items-realtime')
             .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'order_items' }, async () => {
-                const isAdmin = window.location.pathname.startsWith('/admin');
                 if (isAdmin || user?.id) {
                     const orders = await supabaseService.getOrders(isAdmin ? undefined : user?.id);
                     dispatch({ type: 'SET_ORDERS', orders });
@@ -477,7 +476,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             supabase.removeChannel(ordersChannel);
             supabase.removeChannel(itemsChannel);
         };
-    }, [authLoading, isAuthenticated, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [authLoading, profileLoading, isAuthenticated, isAdmin, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const addProduct = async (product: Omit<Product, 'id'>) => {
         const data = await supabaseService.addProduct(product);

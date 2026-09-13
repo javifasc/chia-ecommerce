@@ -10,18 +10,23 @@ export type ProfileData = {
     address: string | null;
     city: string | null;
     avatar_url: string | null;
+    role: 'customer' | 'admin';
 };
 
 type AuthContextType = {
     isAuthenticated: boolean;
     user: User | null;
     profile: ProfileData | null;
+    isAdmin: boolean;
     loading: boolean;
+    /** El perfil llega después de la sesión. Sin esto, el admin recién logueado
+     *  aparecería como cliente durante un instante y lo echaríamos del panel. */
+    profileLoading: boolean;
     login: (email: string, password: string) => Promise<{ error: any }>;
     signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
     logout: () => Promise<void>;
     signInWithGoogle: () => Promise<{ error: any }>;
-    updateProfile: (data: Partial<ProfileData>) => Promise<{ error: any }>;
+    updateProfile: (data: Partial<Omit<ProfileData, 'id' | 'role'>>) => Promise<{ error: any }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
+    const [profileLoading, setProfileLoading] = useState(false);
 
     // Se limpia la sesión corrupta como mucho una vez por montaje.
     const sessionPurged = useRef(false);
@@ -59,6 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.warn('Sesión inválida detectada al leer el perfil. Limpiando storage.');
                 await purgeStaleSession();
             }
+        } finally {
+            setProfileLoading(false);
         }
     };
 
@@ -82,8 +90,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (!currentUser) {
                 setProfile(null);
+                setProfileLoading(false);
                 return;
             }
+
+            // Se marca antes de salir del callback: entre este punto y el fetch de abajo
+            // no debe existir un instante en el que un admin figure como cliente.
+            setProfileLoading(true);
 
             // Supabase ejecuta este callback con el lock de auth tomado y espera a que
             // termine. Llamar a la API de Supabase acá adentro serializa (y puede trabar)
@@ -140,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: result.error };
     };
 
-    const updateProfile = async (data: Partial<ProfileData>) => {
+    const updateProfile = async (data: Partial<Omit<ProfileData, 'id' | 'role'>>) => {
         if (!user) return { error: new Error('No user logged in') };
 
         const { error } = await supabase
@@ -156,12 +169,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ 
-            isAuthenticated, 
-            user, 
-            profile, 
-            loading, 
-            login, 
+        <AuthContext.Provider value={{
+            isAuthenticated,
+            user,
+            profile,
+            isAdmin: profile?.role === 'admin',
+            loading,
+            profileLoading,
+            login,
             signUp, 
             logout, 
             signInWithGoogle,

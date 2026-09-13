@@ -132,53 +132,27 @@ export const supabaseService = {
         }));
     },
 
-    async createOrder(order: Omit<Order, 'id' | 'createdAt'>) {
-        const orderId = `#ORD-${Math.floor(Math.random() * 9000) + 1000}`;
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id || null;
-
-        const { error: orderError } = await supabase
-            .from('orders')
-            .insert([{
-                id: orderId,
-                customer_name: order.customerName,
-                customer_phone: order.customerPhone,
-                total: order.total,
-                status: order.status,
-                delivery_method: order.deliveryMethod,
-                delivery_zone: order.deliveryZone,
-                delivery_fee: order.deliveryFee,
-                address: order.address,
-                user_id: userId
-            }]);
-
-        if (orderError) throw orderError;
-
-        const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(order.items.map(item => ({
-                order_id: orderId,
+    // El pedido se arma entero del lado del servidor (función place_order).
+    // Antes el navegador insertaba la orden, los ítems y después descontaba el stock
+    // uno por uno, mandando él mismo los precios: eso obligaba a dejar la tabla
+    // products escribible por cualquiera y permitía comprar a precio $0 tocando el JS.
+    // Ahora los precios y el envío salen de la base, se valida el stock y todo ocurre
+    // en una sola transacción.
+    async createOrder(order: Omit<Order, 'id' | 'createdAt'>): Promise<string> {
+        const { data, error } = await supabase.rpc('place_order', {
+            p_customer_name: order.customerName,
+            p_customer_phone: order.customerPhone,
+            p_delivery_method: order.deliveryMethod,
+            p_delivery_zone: order.deliveryZone ?? null,
+            p_address: order.address ?? null,
+            p_items: order.items.map(item => ({
                 product_id: item.productId,
-                name: item.name,
-                price: item.price,
                 quantity: item.quantity
-            })));
+            }))
+        });
 
-        if (itemsError) throw itemsError;
-
-        // Update stock for all items
-        for (const item of order.items) {
-            const { data: p } = await supabase.from('products').select('available_stock, reserved_stock').eq('id', item.productId).single();
-            if (p) {
-                await supabase.from('products').update({
-                    available_stock: p.available_stock - item.quantity,
-                    reserved_stock: p.reserved_stock + item.quantity
-                }).eq('id', item.productId);
-            }
-        }
-
-        return orderId;
+        if (error) throw error;
+        return data as string;
     },
 
     async updateOrderStatus(orderId: string, status: string) {
@@ -335,27 +309,14 @@ export const supabaseService = {
     },
 
     // --- Product Suggestions ---
+    // Sumar una sugerencia repetida necesita un UPDATE. Para no dejar la tabla
+    // escribible por cualquiera, el contador se incrementa dentro de la base.
     async submitSuggestion(text: string) {
         const cleanText = text.trim();
         if (!cleanText) return;
 
-        // Try to find existing suggestion (case insensitive)
-        const { data: existing } = await supabase
-            .from('product_suggestions')
-            .select('*')
-            .ilike('text', cleanText)
-            .maybeSingle();
-
-        if (existing) {
-            await supabase
-                .from('product_suggestions')
-                .update({ count: (existing.count || 1) + 1 })
-                .eq('id', existing.id);
-        } else {
-            await supabase
-                .from('product_suggestions')
-                .insert([{ text: cleanText, count: 1, status: 'pending' }]);
-        }
+        const { error } = await supabase.rpc('submit_suggestion', { p_text: cleanText });
+        if (error) throw error;
     },
 
     async getSuggestions(): Promise<ProductSuggestion[]> {

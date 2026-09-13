@@ -1,3 +1,17 @@
+-- ############################################################################
+-- ##  OBSOLETO - NO CORRER  ##################################################
+-- ############################################################################
+--  Este script apaga RLS y deja products, orders, order_items, delivery_fees y
+--  promotions abiertas a cualquiera que tenga la anon key (que es pública:
+--  viaja dentro del JS del sitio). Correrlo deshace toda la seguridad.
+--
+--  Reemplazado por:
+--      supabase_seguridad_paso1.sql
+--      supabase_seguridad_paso2.sql
+--
+--  Se conserva solo como referencia histórica.
+-- ############################################################################
+
 -- =============================================
 -- FIX: Deshabilitar RLS para desarrollo rápido
 -- =============================================

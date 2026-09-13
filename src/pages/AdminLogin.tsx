@@ -8,7 +8,7 @@ const AdminLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const { login, isAuthenticated, loading } = useAuth();
+    const { login, isAuthenticated, isAdmin, loading, profileLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -16,10 +16,19 @@ const AdminLogin = () => {
 
     // Auto-redirect if already authenticated and loading is complete
     useEffect(() => {
-        if (!loading && isAuthenticated) {
+        // Hay que esperar al perfil: el rol vive ahí y llega después de la sesión.
+        if (loading || profileLoading || !isAuthenticated) return;
+
+        if (isAdmin) {
             navigate(from, { replace: true });
+            return;
         }
-    }, [isAuthenticated, loading, navigate, from]);
+
+        // Credenciales válidas pero de una cuenta de cliente. Sin este aviso el
+        // usuario quedaba rebotado a la tienda sin entender por qué.
+        setError('Esta cuenta no tiene permisos de administrador.');
+        setIsLoading(false);
+    }, [isAuthenticated, isAdmin, loading, profileLoading, navigate, from]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
