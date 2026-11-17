@@ -23,7 +23,12 @@ type AuthContextType = {
      *  aparecería como cliente durante un instante y lo echaríamos del panel. */
     profileLoading: boolean;
     login: (email: string, password: string) => Promise<{ error: any }>;
-    signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+    /** `needsConfirmation`: la cuenta se creó pero no hay sesión hasta que el
+     *  usuario abra el link del mail. `alreadyRegistered`: con la confirmación
+     *  activa, Supabase no devuelve error para un email repetido (para no
+     *  revelar qué cuentas existen); lo delata un usuario sin identidades. */
+    signUp: (email: string, password: string, fullName: string) => Promise<{ error: any; needsConfirmation: boolean; alreadyRegistered: boolean }>;
+    resendConfirmation: (email: string) => Promise<{ error: any }>;
     logout: () => Promise<void>;
     signInWithGoogle: () => Promise<{ error: any }>;
     updateProfile: (data: Partial<Omit<ProfileData, 'id' | 'role'>>) => Promise<{ error: any }>;
@@ -128,8 +133,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             options: {
                 data: {
                     full_name: fullName,
-                }
+                },
+                // Sin esto el link del mail apunta a la Site URL de Supabase, que
+                // puede no ser este dominio. La URL tiene que estar en
+                // Authentication > URL Configuration > Redirect URLs.
+                emailRedirectTo: `${window.location.origin}/profile`,
             }
+        });
+        return {
+            error: result.error,
+            needsConfirmation: !result.error && !result.data.session,
+            alreadyRegistered: !result.error && result.data.user?.identities?.length === 0,
+        };
+    };
+
+    const resendConfirmation = async (email: string) => {
+        const result = await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: { emailRedirectTo: `${window.location.origin}/profile` },
         });
         return { error: result.error };
     };
@@ -177,8 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             loading,
             profileLoading,
             login,
-            signUp, 
-            logout, 
+            signUp,
+            resendConfirmation,
+            logout,
             signInWithGoogle,
             updateProfile 
         }}>

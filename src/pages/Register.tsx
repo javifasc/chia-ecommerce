@@ -11,7 +11,10 @@ const Register = () => {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-    const { signUp, signInWithGoogle } = useAuth();
+    /** Email al que se mandó el link de confirmación; con valor, se muestra el aviso en vez del formulario. */
+    const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+    const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+    const { signUp, resendConfirmation, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -26,18 +29,30 @@ const Register = () => {
         setIsLoading(true);
         setError(null);
 
-        const { error } = await signUp(email, password, fullName);
+        const { error, needsConfirmation, alreadyRegistered } = await signUp(email, password, fullName);
 
-        if (!error) {
-            // Usually Supabase auto-logs in after signup if email confirm is off
-            // Or if it's on, we might need a "Check your email" message
-            // For now, let's assume it works and redirect to profile
+        if (alreadyRegistered) {
+            setError('Ya existe una cuenta con ese email. Inicia sesión.');
+            setIsLoading(false);
+        } else if (needsConfirmation) {
+            setPendingEmail(email);
+            setIsLoading(false);
+        } else if (!error) {
+            // Confirmación desactivada en Supabase: la sesión ya está abierta.
             navigate('/profile');
         } else {
             setError(error.message || 'Error al registrarse. Intenta de nuevo.');
             setIsLoading(false);
             if (window.navigator.vibrate) window.navigator.vibrate(200);
         }
+    };
+
+    const handleResend = async () => {
+        if (!pendingEmail) return;
+        setResendState('sending');
+        const { error } = await resendConfirmation(pendingEmail);
+        if (error) console.error('Error al reenviar la confirmación:', error);
+        setResendState(error ? 'error' : 'sent');
     };
 
     const handleGoogleSignIn = async () => {
@@ -52,6 +67,47 @@ const Register = () => {
             setIsGoogleLoading(false);
         }
     };
+
+    if (pendingEmail) {
+        return (
+            <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased not-italic">
+                <div className="w-full max-w-sm space-y-8 text-center animate-in fade-in zoom-in-95 duration-500">
+                    <div className="inline-flex size-16 items-center justify-center rounded-3xl bg-primary/20 text-primary-dark">
+                        <span aria-hidden="true" className="material-symbols-outlined text-4xl">mark_email_unread</span>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Revisa tu correo</h1>
+                        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
+                            Te enviamos un link de confirmación a{' '}
+                            <span className="font-bold text-slate-700 dark:text-slate-200 break-all">{pendingEmail}</span>.
+                            Ábrelo para activar tu cuenta.
+                        </p>
+                        <p className="mt-2 text-xs text-slate-400">Si no lo ves en unos minutos, revisa la carpeta de spam.</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resendState === 'sending' || resendState === 'sent'}
+                        className="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+                    >
+                        {resendState === 'sending' ? 'Enviando...'
+                            : resendState === 'sent' ? 'Correo reenviado'
+                            : 'Reenviar correo'}
+                    </button>
+                    {resendState === 'error' && (
+                        <p className="text-[11px] text-red-500 font-bold uppercase tracking-wider">
+                            No se pudo reenviar. Espera un minuto e intenta de nuevo.
+                        </p>
+                    )}
+
+                    <Link to="/login" className="block text-xs text-primary-dark dark:text-primary font-bold hover:underline">
+                        Ya confirmé, iniciar sesión
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 font-display antialiased not-italic">
