@@ -26,9 +26,10 @@ const Cart = () => {
     // Sync profile data when it loads
     useEffect(() => {
         if (profile) {
-            if (!customerName) setCustomerName(profile.full_name || '');
-            if (!customerPhone) setCustomerPhone(profile.phone || '');
-            if (!address) setAddress(profile.address || '');
+            // Solo completa lo vacío: no pisa lo que el cliente ya escribió.
+            setCustomerName(prev => prev || profile.full_name || '');
+            setCustomerPhone(prev => prev || profile.phone || '');
+            setAddress(prev => prev || profile.address || '');
         }
     }, [profile]);
 

@@ -55,7 +55,7 @@ const Inventory = () => {
         }
 
         // Group by category
-        const groups: { [key: string]: typeof state.products } = {};
+        const groups: { [key: string]: typeof filtered } = {};
         filtered.forEach(p => {
             if (!groups[p.category]) groups[p.category] = [];
             groups[p.category].push(p);

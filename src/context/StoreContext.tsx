@@ -450,7 +450,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             supabasePublic.removeChannel(promoChannel);
             supabasePublic.removeChannel(feesChannel);
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     // EFFECT 2 - load orders, runs when auth changes
     useEffect(() => {
@@ -526,7 +526,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             supabase.removeChannel(ordersChannel);
             supabase.removeChannel(itemsChannel);
         };
-    }, [authLoading, profileLoading, isAuthenticated, isAdmin, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [authLoading, profileLoading, isAuthenticated, isAdmin, user?.id]);
 
     const addProduct = async (product: Omit<Product, 'id'>) => {
         const data = await supabaseService.addProduct(product);

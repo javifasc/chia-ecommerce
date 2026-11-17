@@ -29,7 +29,7 @@ const ProductUpload = () => {
     const [carbs, setCarbs] = useState('');
     const [fat, setFat] = useState('');
     const [isFractional, setIsFractional] = useState(false);
-    const [fractionalStep, setFractionalStep] = useState('0.25');
+    const [fractionalStep, setFractionalStep] = useState('250');
     const [image, setImage] = useState('https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=1000&auto=format&fit=crop');
 
     useEffect(() => {
@@ -50,7 +50,8 @@ const ProductUpload = () => {
                 setCarbs(product.nutritionalInfo?.carbs || '');
                 setFat(product.nutritionalInfo?.fat || '');
                 setIsFractional(product.isFractional || false);
-                setFractionalStep(product.fractionalStep?.toString() || '0.25');
+                // Un producto por unidad guarda paso 1: al pasarlo a fraccionado se sugiere 250 g.
+                setFractionalStep(product.isFractional && product.fractionalStep ? product.fractionalStep.toString() : '250');
                 setImage(product.image);
             }
         }
@@ -77,6 +78,13 @@ const ProductUpload = () => {
             return;
         }
 
+        // El paso va en gramos (el carrito y place_order lo dividen por 1000).
+        const stepGrams = parseFloat(fractionalStep.toString().replace(',', '.'));
+        if (isFractional && !(Number.isInteger(stepGrams) && stepGrams >= 1)) {
+            showToast('El incremento va en gramos enteros, por ejemplo 250.', 'warning');
+            return;
+        }
+
         const newProduct: Product = {
             id: isEditMode ? id! : '', // ID will be handled by Supabase if empty
             name,
@@ -90,7 +98,7 @@ const ProductUpload = () => {
             availableStock: parseFloat(stock.toString().replace(',', '.')),
             reservedStock: isEditMode ? (state.products.find(p => p.id === id)?.reservedStock || 0) : 0,
             isFractional,
-            fractionalStep: isFractional ? parseFloat(fractionalStep.toString().replace(',', '.')) : 1,
+            fractionalStep: isFractional ? stepGrams : 1,
             badges: badges ? badges.split(',').map(b => b.trim()) : undefined,
             nutritionalInfo: (calories || protein || carbs || fat) ? {
                 calories: calories || undefined,

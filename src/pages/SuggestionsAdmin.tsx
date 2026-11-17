@@ -12,6 +12,9 @@ const SuggestionsAdmin = () => {
 
     useEffect(() => {
         loadSuggestions();
+        // Carga única al montar; loadSuggestions usa showToast del contexto, que no
+        // es estable, y como dependencia volvería a pedir la lista en cada render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadSuggestions = async () => {

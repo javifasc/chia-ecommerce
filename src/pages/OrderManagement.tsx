@@ -3,6 +3,13 @@ import { useStore, OrderStatus } from '../context/StoreContext';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
 
+const columns: { label: string; status: OrderStatus; color: string }[] = [
+    { label: 'Pendiente', status: 'Pendiente', color: 'bg-orange-400' },
+    { label: 'En Preparación', status: 'Preparación', color: 'bg-blue-400' },
+    { label: 'Listo', status: 'Listo', color: 'bg-green-400' },
+    { label: 'Entregado', status: 'Entregado', color: 'bg-slate-400' },
+];
+
 const OrderManagement = () => {
     const { state, dispatch, updateOrderStatus, markOrdersAsRead } = useStore();
     const { showConfirm, showToast } = useNotifications();
@@ -20,13 +27,6 @@ const OrderManagement = () => {
             mainRef.current.scrollLeft += e.deltaY;
         }
     }, [viewType]);
-
-    const columns: { label: string; status: OrderStatus; color: string }[] = [
-        { label: 'Pendiente', status: 'Pendiente', color: 'bg-orange-400' },
-        { label: 'En Preparación', status: 'Preparación', color: 'bg-blue-400' },
-        { label: 'Listo', status: 'Listo', color: 'bg-green-400' },
-        { label: 'Entregado', status: 'Entregado', color: 'bg-slate-400' },
-    ];
 
     const groupedOrders = useMemo(() => {
         return columns.map(col => ({

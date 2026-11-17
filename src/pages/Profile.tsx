@@ -45,6 +45,9 @@ const Profile = () => {
         }, 2000);
 
         return () => clearTimeout(timer);
+        // Solo depende del contador: logout llega del contexto sin useCallback y
+        // agregarlo reiniciaría el temporizador en cada render del provider.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clickCount]);
 
     useEffect(() => {
