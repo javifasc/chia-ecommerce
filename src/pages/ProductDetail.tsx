@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import Toast from '../components/Toast';
+import { isForSale } from '../utils/productUtils';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -10,7 +11,7 @@ const ProductDetail = () => {
     const { state, dispatch, formatWeight } = useStore();
     const [showToast, setShowToast] = useState(false);
 
-    const product = state.products.find(p => p.id === id && p.availableStock > 0);
+    const product = state.products.find(p => p.id === id && isForSale(p));
 
     if (!product) {
         return (

@@ -4,7 +4,9 @@ import { Link } from 'react-router-dom';
 const OrderHistory = () => {
     const { state } = useStore();
 
-    const totalEarnings = state.historyOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalEarnings = state.historyOrders
+        .filter(order => order.status === 'Entregado')
+        .reduce((sum, order) => sum + order.total, 0);
 
     return (
         <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 min-h-screen pb-24 relative not-italic">
@@ -52,8 +54,11 @@ const OrderHistory = () => {
                                                 </span>
                                             </div>
                                             <h3 className="font-bold text-slate-900 dark:text-slate-100">{order.customerName}</h3>
+                                            {order.status === 'Cancelado' && (
+                                                <span className="inline-block mt-1 px-2 py-0.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-[11px] font-bold uppercase tracking-wider text-red-500">Cancelado</span>
+                                            )}
                                         </div>
-                                        <span className="text-lg font-bold text-slate-900 dark:text-white">$ {order.total.toFixed(2)}</span>
+                                        <span className={`text-lg font-bold ${order.status === 'Cancelado' ? 'text-slate-300 dark:text-slate-600 line-through' : 'text-slate-900 dark:text-white'}`}>$ {order.total.toFixed(2)}</span>
                                     </div>
 
                                     <div className="space-y-1.5 pt-4 border-t border-slate-50 dark:border-slate-800/50">

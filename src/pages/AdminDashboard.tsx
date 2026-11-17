@@ -35,10 +35,9 @@ const AdminDashboard = () => {
     }, []);
 
 
-    // Combine delivered orders from active + history
+    // Solo los entregados cuentan como venta; los cancelados también están en el historial.
     const allDeliveredOrders = useMemo(() => {
-        const delivered = state.orders.filter(o => o.status === 'Entregado');
-        return [...delivered, ...state.historyOrders];
+        return [...state.orders, ...state.historyOrders].filter(o => o.status === 'Entregado');
     }, [state.orders, state.historyOrders]);
 
     // Filter by time range

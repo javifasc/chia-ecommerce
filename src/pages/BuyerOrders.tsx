@@ -31,7 +31,8 @@ const BuyerOrders = () => {
                                 <span className={`px-2 py-1 rounded-lg text-[11px] font-bold ${order.status === 'Pendiente' ? 'bg-orange-100 text-orange-600' :
                                     order.status === 'Preparación' ? 'bg-blue-100 text-blue-600' :
                                         order.status === 'Listo' ? 'bg-green-100 text-green-600' :
-                                            'bg-slate-100 text-slate-500'
+                                            order.status === 'Cancelado' ? 'bg-red-50 text-red-500' :
+                                                'bg-slate-100 text-slate-500'
                                     }`}>
                                     {order.status.toUpperCase()}
                                 </span>

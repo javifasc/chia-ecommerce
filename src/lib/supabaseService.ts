@@ -161,22 +161,9 @@ export const supabaseService = {
             .update({ status })
             .eq('id', orderId);
 
+        // El stock lo mueve el trigger orders_status_stock de la base
+        // (supabase_stock_estados.sql): no hay que tocarlo desde acá.
         if (error) throw error;
-
-        // If delivered, decrease reserved stock
-        if (status === 'Entregado') {
-            const { data: items } = await supabase.from('order_items').select('product_id, quantity').eq('order_id', orderId);
-            if (items) {
-                for (const item of items) {
-                    const { data: p } = await supabase.from('products').select('reserved_stock').eq('id', item.product_id).single();
-                    if (p) {
-                        await supabase.from('products').update({
-                            reserved_stock: p.reserved_stock - item.quantity
-                        }).eq('id', item.product_id);
-                    }
-                }
-            }
-        }
     },
 
     // --- Delivery Fees ---

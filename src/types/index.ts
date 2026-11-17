@@ -36,7 +36,10 @@ export type CartItem = {
     quantity: number;
 };
 
-export type OrderStatus = 'Pendiente' | 'Preparación' | 'Listo' | 'Entregado';
+export type OrderStatus = 'Pendiente' | 'Preparación' | 'Listo' | 'Entregado' | 'Cancelado';
+
+/** Pedidos terminados: salen del tablero y pasan al historial. */
+export const isClosedOrderStatus = (status: OrderStatus) => status === 'Entregado' || status === 'Cancelado';
 
 export type Order = {
     id: string;

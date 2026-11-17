@@ -45,6 +45,16 @@ const OrderManagement = () => {
         }
     };
 
+    const handleCancel = (orderId: string, customerName: string) => {
+        showConfirm({
+            title: '¿Cancelar pedido?',
+            message: `El pedido ${orderId} de ${customerName} pasa al historial como cancelado y sus productos vuelven al stock disponible.`,
+            confirmText: 'Cancelar pedido',
+            isDestructive: true,
+            onConfirm: () => handleStatusChange(orderId, 'Cancelado'),
+        });
+    };
+
     const getNextStatus = (current: OrderStatus): OrderStatus | null => {
         const sequence: OrderStatus[] = ['Pendiente', 'Preparación', 'Listo', 'Entregado'];
         const idx = sequence.indexOf(current);
@@ -160,15 +170,25 @@ const OrderManagement = () => {
 
                                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
                                                 <span className="text-sm font-bold text-slate-900 dark:text-white">${order.total.toFixed(2)}</span>
-                                                {getNextStatus(order.status) && (
+                                                <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => handleStatusChange(order.id, getNextStatus(order.status)!)}
-                                                        className="flex items-center gap-1.5 px-4 py-2 bg-primary text-slate-900 text-[11px] font-bold rounded-xl shadow-md shadow-primary/20 active:scale-95 transition-all"
+                                                        onClick={() => handleCancel(order.id, order.customerName)}
+                                                        aria-label={`Cancelar pedido ${order.id}`}
+                                                        title="Cancelar pedido"
+                                                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                                     >
-                                                        {order.status === 'Listo' ? 'Entregar' : 'Siguiente'}
-                                                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                                        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
                                                     </button>
-                                                )}
+                                                    {getNextStatus(order.status) && (
+                                                        <button
+                                                            onClick={() => handleStatusChange(order.id, getNextStatus(order.status)!)}
+                                                            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-slate-900 text-[11px] font-bold rounded-xl shadow-md shadow-primary/20 active:scale-95 transition-all"
+                                                        >
+                                                            {order.status === 'Listo' ? 'Entregar' : 'Siguiente'}
+                                                            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     )) : (
@@ -203,6 +223,14 @@ const OrderManagement = () => {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">$ {order.total.toFixed(2)}</span>
+                                                <button
+                                                    onClick={() => handleCancel(order.id, order.customerName)}
+                                                    aria-label={`Cancelar pedido ${order.id}`}
+                                                    title="Cancelar pedido"
+                                                    className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
+                                                >
+                                                    <span aria-hidden="true" className="material-symbols-outlined text-lg">close</span>
+                                                </button>
                                                 {getNextStatus(order.status) && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, getNextStatus(order.status)!)}

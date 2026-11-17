@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../types';
 import { CATEGORIES_MAP } from '../utils/categoryMapping';
+import { isForSale } from '../utils/productUtils';
 import { Link } from 'react-router-dom';
 import FilterModal from '../components/FilterModal';
 import Toast from '../components/Toast';
@@ -50,8 +51,7 @@ const Catalog = () => {
             const matchesPrice = p.price <= maxPrice;
             const matchesBadges = selectedBadges.length === 0 ||
                 selectedBadges.every(badge => p.badges?.includes(badge));
-            const hasStock = p.availableStock > 0;
-            return matchesSearch && matchesCategory && matchesSubcategory && matchesPrice && matchesBadges && hasStock;
+            return matchesSearch && matchesCategory && matchesSubcategory && matchesPrice && matchesBadges && isForSale(p);
         });
     }, [state.products, searchQuery, activeCategory, activeSubcategory, maxPrice, selectedBadges]);
 

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../types';
 import { CATEGORIES_MAP } from '../utils/categoryMapping';
+import { isForSale } from '../utils/productUtils';
 import { Link } from 'react-router-dom';
 import FilterModal from '../components/FilterModal';
 import Toast from '../components/Toast';
@@ -47,8 +48,7 @@ const Home = () => {
             const matchesPrice = p.price <= maxPrice;
             const matchesBadges = selectedBadges.length === 0 ||
                 selectedBadges.every(badge => p.badges?.includes(badge));
-            const hasStock = p.availableStock > 0;
-            return matchesSearch && matchesCategory && matchesSubcategory && matchesPrice && matchesBadges && hasStock;
+            return matchesSearch && matchesCategory && matchesSubcategory && matchesPrice && matchesBadges && isForSale(p);
         });
 
         // If showing "Popular Products" (Todo + No Search + No other filters), sort by sales and limit to 15
@@ -69,7 +69,7 @@ const Home = () => {
     const hasMore = filteredProducts.length > visibleCount;
 
     const newArrivals = useMemo(() => {
-        return state.products.filter(p => p.isNewArrival && p.availableStock > 0);
+        return state.products.filter(p => p.isNewArrival && isForSale(p));
     }, [state.products]);
 
     const cartCount = state.cart.reduce((sum, item) => {

@@ -12,7 +12,8 @@ import {
     Order,
     HeroPromo,
     FeaturedPromo,
-    InstagramPromo
+    InstagramPromo,
+    isClosedOrderStatus
 } from '../types';
 
 export type {
@@ -102,8 +103,8 @@ function storeReducer(state: State, action: Action): State {
         case 'SET_ORDERS':
             return {
                 ...state,
-                orders: action.orders.filter(o => o.status !== 'Entregado'),
-                historyOrders: action.orders.filter(o => o.status === 'Entregado')
+                orders: action.orders.filter(o => !isClosedOrderStatus(o.status)),
+                historyOrders: action.orders.filter(o => isClosedOrderStatus(o.status))
             };
 
         case 'SET_PROMOTIONS':
@@ -187,29 +188,16 @@ function storeReducer(state: State, action: Action): State {
         }
 
         case 'UPDATE_ORDER_STATUS': {
-            const order = [...state.orders, ...state.historyOrders].find(o => o.id === action.orderId);
-            if (!order) return state;
-
-            let products = [...state.products];
-            if (action.status === 'Entregado') {
-                products = products.map(p => {
-                    const orderItem = order.items.find(oi => oi.productId === p.id);
-                    if (orderItem) {
-                        return { ...p, reservedStock: p.reservedStock - orderItem.quantity };
-                    }
-                    return p;
-                });
-            }
-
+            // El stock lo ajusta un trigger en la base y llega por products-realtime;
+            // acá solo se mueve el pedido entre el tablero y el historial.
             const allOrders = [...state.orders, ...state.historyOrders].map(o =>
                 o.id === action.orderId ? { ...o, status: action.status } : o
             );
 
             return {
                 ...state,
-                products,
-                orders: allOrders.filter(o => o.status !== 'Entregado'),
-                historyOrders: allOrders.filter(o => o.status === 'Entregado')
+                orders: allOrders.filter(o => !isClosedOrderStatus(o.status)),
+                historyOrders: allOrders.filter(o => isClosedOrderStatus(o.status))
             };
         }
 
