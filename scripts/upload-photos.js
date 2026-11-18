@@ -85,14 +85,24 @@ async function main() {
 
     // 4. Obtener todos los productos de la base de datos (Optimización: 1 sola consulta)
     console.log('Obteniendo catálogo de productos desde Supabase...');
-    const { data: products, error: fetchError } = await supabase
-        .from('products')
-        .select('id, codigo, name');
+    // Supabase devuelve como máximo 1000 filas por consulta: con más productos,
+    // los que quedaban afuera se daban por inexistentes y no recibían su foto.
+    const products = [];
+    for (let from = 0; ; from += 1000) {
+        const { data, error: fetchError } = await supabase
+            .from('products')
+            .select('id, codigo, name, image')
+            .order('id')
+            .range(from, from + 999);
 
-    if (fetchError) {
-        console.error('Error al obtener productos:', fetchError.message);
-        process.exit(1);
+        if (fetchError) {
+            console.error('Error al obtener productos:', fetchError.message);
+            process.exit(1);
+        }
+        products.push(...data);
+        if (data.length < 1000) break;
     }
+    console.log(`${products.length} productos en la base.`);
 
     // Mapear productos por su código limpio
     const productMap = {};
@@ -114,6 +124,7 @@ async function main() {
     let successCount = 0;
     let skipCount = 0;
     let errorCount = 0;
+    let alreadyCount = 0;
 
     for (const file of files) {
         const ext = path.extname(file);
@@ -129,10 +140,18 @@ async function main() {
             continue;
         }
 
+        const storagePath = `products/${file}`;
+
+        // Ya tiene esta misma foto: no hace falta volver a subirla.
+        const { data: { publicUrl: expectedUrl } } = supabase.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
+        if (product.image === expectedUrl) {
+            alreadyCount++;
+            continue;
+        }
+
         try {
             // A. Subir archivo a Supabase Storage
             const fileBuffer = fs.readFileSync(filePath);
-            const storagePath = `products/${file}`;
             let mimeType = 'image/jpeg';
             if (ext.toLowerCase() === '.png') mimeType = 'image/png';
             if (ext.toLowerCase() === '.webp') mimeType = 'image/webp';
@@ -178,6 +197,7 @@ async function main() {
 
     console.log('\n=== Resumen de ejecución ===');
     console.log(`Procesadas exitosamente: ${successCount}`);
+    console.log(`Ya tenían esa foto: ${alreadyCount}`);
     console.log(`Omitidas (sin producto en DB): ${skipCount}`);
     console.log(`Errores: ${errorCount}`);
 }

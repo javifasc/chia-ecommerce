@@ -99,14 +99,19 @@ begin
                 raise exception 'El código % es nuevo y no tiene nombre', v_codigo;
             end if;
 
+            -- La familia FRACCIONADOS se vende por peso: stock en kg, precio del kilo.
+            -- Se crea de a 100 g; el dueño ajusta el paso desde la ficha si hace falta.
             insert into public.products (
                 codigo, name, description, price, category, subcategory,
-                image, unit, available_stock, reserved_stock
+                image, unit, available_stock, reserved_stock,
+                is_fractional, fractional_step
             ) values (
                 v_codigo, v_name, v_name, coalesce(v_price, 0),
                 coalesce(nullif(v_row->>'category', ''), 'General'),
                 nullif(v_row->>'subcategory', ''),
-                '', 'un.', greatest(0, v_stock), 0
+                '', 'un.', greatest(0, v_stock), 0,
+                upper(coalesce(v_row->>'subcategory', '')) = 'FRACCIONADOS',
+                case when upper(coalesce(v_row->>'subcategory', '')) = 'FRACCIONADOS' then 100 else 1 end
             )
             returning id into v_new_id;
 
