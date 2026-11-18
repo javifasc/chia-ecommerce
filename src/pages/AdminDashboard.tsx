@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { CATEGORIES_MAP } from '../utils/categoryMapping';
 import { Link } from 'react-router-dom';
 import { supabaseService } from '../lib/supabaseService';
+import ShippingSettings from '../components/ShippingSettings';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -16,7 +17,7 @@ const CHART_COLORS = [
 ];
 
 const AdminDashboard = () => {
-    const { state, updateDeliveryFees, formatWeight } = useStore();
+    const { state, formatWeight } = useStore();
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('week');
     const [drillCategory, setDrillCategory] = useState<string | null>(null);
     const [suggestionCount, setSuggestionCount] = useState(0);
@@ -436,33 +437,7 @@ const AdminDashboard = () => {
                     )}
                 </div>
 
-                <div className="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 text-left">
-                    <div className="flex items-center gap-2 mb-4">
-                        <span aria-hidden="true" className="material-symbols-outlined text-primary">local_shipping</span>
-                        <h3 className="font-bold text-lg">Configuración de Envíos</h3>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Configura el monto mínimo para habilitar el envío gratis a domicilio (Rada Tilly).</p>
-
-                    <div className="p-4 bg-primary/10 dark:bg-primary/5 rounded-2xl border border-primary/20">
-                        <label className="block text-xs font-bold uppercase tracking-widest text-primary-dark dark:text-primary mb-3">Envío Gratis a Domicilio</label>
-                        <div className="flex items-center justify-between gap-4">
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Gratis a partir de:</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-slate-400 text-sm">$</span>
-                                <input
-                                    type="number"
-                                    value={state.freeShippingThreshold}
-                                    onChange={(e) => updateDeliveryFees({ '_FREE_THRESHOLD_': Number(e.target.value) })}
-                                    className="w-24 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all"
-                                    placeholder="Ej: 5000"
-                                />
-                            </div>
-                        </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3 italic">
-                            Los pedidos que alcancen este monto podrán solicitar envío a domicilio sin costo adicional.
-                        </p>
-                    </div>
-                </div>
+                <ShippingSettings />
 
                 {/* Quick Links */}
                 <div className="grid grid-cols-1 gap-4">

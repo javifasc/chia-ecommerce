@@ -183,9 +183,19 @@ export const supabaseService = {
         return fees;
     },
 
+    // Todo en una sola llamada. Antes se guardaba zona por zona y los errores se
+    // ignoraban: si fallaba, el panel no se enteraba.
     async updateDeliveryFees(fees: Record<string, number>) {
-        for (const [zone, fee] of Object.entries(fees)) {
-            await supabase.from('delivery_fees').upsert({ zone, fee });
+        const rows = Object.entries(fees).map(([zone, fee]) => ({ zone, fee }));
+        const { data, error } = await supabase
+            .from('delivery_fees')
+            .upsert(rows)
+            .select('zone');
+
+        // 42501 = la política de seguridad lo rechazó (sesión vencida o no es admin).
+        if (error && error.code !== '42501') throw error;
+        if (error || !data || data.length !== rows.length) {
+            throw new Error('No se pudo guardar. Volvé a iniciar sesión e intentá de nuevo.');
         }
     },
 

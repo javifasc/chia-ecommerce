@@ -587,6 +587,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const updateDeliveryFees = async (fees: Record<string, number>) => {
         await supabaseService.updateDeliveryFees(fees);
+        // Se refleja ya, sin esperar al aviso en tiempo real de la base.
+        dispatch({
+            type: 'UPDATE_DELIVERY_FEES',
+            fees: { ...state.deliveryFees, '_FREE_THRESHOLD_': state.freeShippingThreshold, ...fees }
+        });
     };
 
     const updatePromotions = async (hero?: HeroPromo, featured?: FeaturedPromo, instagram?: InstagramPromo) => {

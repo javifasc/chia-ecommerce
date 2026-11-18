@@ -1,9 +1,39 @@
-import { useStore } from '../context/StoreContext';
+import { useState } from 'react';
+import { useStore, Order } from '../context/StoreContext';
+import { useNotifications } from '../context/NotificationContext';
 import { Link } from 'react-router-dom';
 import { formatOrderQuantity } from '../utils/productUtils';
 
 const OrderHistory = () => {
-    const { state, formatWeight } = useStore();
+    const { state, formatWeight, updateOrderStatus } = useStore();
+    const { showConfirm, showToast } = useNotifications();
+    const [pendingId, setPendingId] = useState<string | null>(null);
+
+    // Deshacer un cierre por error. El stock lo acomoda la base: un entregado que
+    // vuelve a Listo se reserva de nuevo, y un cancelado que se reactiva vuelve a
+    // tomar stock (si ya no hay, la base lo rechaza y se muestra el motivo).
+    const handleReopen = (order: Order) => {
+        const toStatus = order.status === 'Entregado' ? 'Listo' : 'Pendiente';
+        showConfirm({
+            title: order.status === 'Entregado' ? '¿Volver a Listo?' : '¿Reactivar pedido?',
+            message: order.status === 'Entregado'
+                ? `El pedido ${order.id} de ${order.customerName} vuelve al tablero como Listo y deja de contar como venta. No hace falta tocar el stock.`
+                : `El pedido ${order.id} de ${order.customerName} vuelve al tablero como Pendiente y sus productos se reservan otra vez.`,
+            confirmText: order.status === 'Entregado' ? 'Volver a Listo' : 'Reactivar',
+            onConfirm: async () => {
+                setPendingId(order.id);
+                try {
+                    await updateOrderStatus(order.id, toStatus);
+                    showToast(`Pedido ${order.id} volvió al tablero como ${toStatus}`, 'success');
+                } catch (error: any) {
+                    console.error('Error al reabrir el pedido:', error);
+                    showToast(error?.message || 'No se pudo cambiar el pedido', 'error');
+                } finally {
+                    setPendingId(null);
+                }
+            },
+        });
+    };
 
     const totalEarnings = state.historyOrders
         .filter(order => order.status === 'Entregado')
@@ -59,7 +89,18 @@ const OrderHistory = () => {
                                                 <span className="inline-block mt-1 px-2 py-0.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-[11px] font-bold uppercase tracking-wider text-red-500">Cancelado</span>
                                             )}
                                         </div>
-                                        <span className={`text-lg font-bold ${order.status === 'Cancelado' ? 'text-slate-300 dark:text-slate-600 line-through' : 'text-slate-900 dark:text-white'}`}>$ {order.total.toFixed(2)}</span>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <span className={`text-lg font-bold ${order.status === 'Cancelado' ? 'text-slate-300 dark:text-slate-600 line-through' : 'text-slate-900 dark:text-white'}`}>$ {order.total.toFixed(2)}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleReopen(order)}
+                                                disabled={pendingId === order.id}
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                                            >
+                                                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">undo</span>
+                                                {order.status === 'Entregado' ? 'Volver a Listo' : 'Reactivar'}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-1.5 pt-4 border-t border-slate-50 dark:border-slate-800/50">
