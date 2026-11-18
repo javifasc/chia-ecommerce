@@ -14,7 +14,30 @@ export type ParseResult = {
     rows: ParsedStockRow[];
     errors: string[];
     totalRows: number;
+    /** Columnas obligatorias que no están en el archivo: si hay alguna, no se puede importar. */
+    missingColumns: string[];
+    /** Códigos que aparecían en más de una fila (p. ej. dos depósitos): se sumó el stock. */
+    mergedCodes: string[];
 };
+
+const ALIASES = {
+    codigo: ['Código', 'Codigo', 'codigo', 'CODIGO', 'Cod', 'Code'],
+    nombre: ['Nombre', 'nombre', 'NOMBRE', 'Descripcion', 'Descripción', 'Name'],
+    familia: ['Familia', 'familia', 'FAMILIA', 'Categoría', 'Categoria', 'Category'],
+    deposito: ['Depósito', 'Deposito', 'deposito', 'DEPOSITO', 'Deposit'],
+    stock: ['Stock', 'stock', 'STOCK', 'Cantidad', 'Qty'],
+    costo: ['Costo Valorizado', 'Costo', 'costo', 'COSTO', 'Cost'],
+    venta: ['Venta Valorizada', 'Venta', 'venta', 'VENTA', 'Precio', 'Price'],
+};
+
+// Sin estas columnas el valor faltante se leía como vacío o 0 y pisaba la tienda
+// entera (todo sin stock, sin precio o sin nombre).
+const REQUIRED: { label: string; aliases: string[] }[] = [
+    { label: 'Código', aliases: ALIASES.codigo },
+    { label: 'Nombre', aliases: ALIASES.nombre },
+    { label: 'Stock', aliases: ALIASES.stock },
+    { label: 'Venta Valorizada (precio)', aliases: ALIASES.venta },
+];
 
 /**
  * Parsea un archivo XLSX del software fiscal y extrae las filas relevantes.
@@ -30,21 +53,28 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
 
+                const header = (XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 })[0] || [])
+                    .map(h => String(h).trim().toLowerCase());
+                const missingColumns = REQUIRED
+                    .filter(col => !col.aliases.some(a => header.includes(a.toLowerCase())))
+                    .map(col => col.label);
+
                 // Convert to JSON (header row becomes keys)
                 const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
                 const errors: string[] = [];
-                const rows: ParsedStockRow[] = [];
+                const byCode = new Map<string, ParsedStockRow>();
+                const mergedCodes = new Set<string>();
 
                 rawRows.forEach((row, index) => {
                     // Try to find columns (flexible matching)
-                    const codigo = String(findCol(row, ['Código', 'Codigo', 'codigo', 'CODIGO', 'Cod', 'Code']) || '').trim();
-                    const nombre = String(findCol(row, ['Nombre', 'nombre', 'NOMBRE', 'Descripcion', 'Descripción', 'Name']) || '').trim();
-                    const familia = String(findCol(row, ['Familia', 'familia', 'FAMILIA', 'Categoría', 'Categoria', 'Category']) || '').trim();
-                    const deposito = String(findCol(row, ['Depósito', 'Deposito', 'deposito', 'DEPOSITO', 'Deposit']) || '').trim();
-                    const stockRaw = findCol(row, ['Stock', 'stock', 'STOCK', 'Cantidad', 'Qty']);
-                    const costoRaw = findCol(row, ['Costo Valorizado', 'Costo', 'costo', 'COSTO', 'Cost']);
-                    const ventaRaw = findCol(row, ['Venta Valorizada', 'Venta', 'venta', 'VENTA', 'Precio', 'Price']);
+                    const codigo = String(findCol(row, ALIASES.codigo) || '').trim();
+                    const nombre = String(findCol(row, ALIASES.nombre) || '').trim();
+                    const familia = String(findCol(row, ALIASES.familia) || '').trim();
+                    const deposito = String(findCol(row, ALIASES.deposito) || '').trim();
+                    const stockRaw = findCol(row, ALIASES.stock);
+                    const costoRaw = findCol(row, ALIASES.costo);
+                    const ventaRaw = findCol(row, ALIASES.venta);
 
                     if (!codigo) {
                         errors.push(`Fila ${index + 2}: Sin código, se omite.`);
@@ -55,7 +85,19 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                     const costoValorizado = parseNumber(costoRaw);
                     const ventaValorizada = parseNumber(ventaRaw);
 
-                    rows.push({
+                    // Un código repetido (otro depósito) hacía fallar un lote entero de
+                    // la importación: ahora se suma el stock y se avisa.
+                    const previous = byCode.get(codigo);
+                    if (previous) {
+                        mergedCodes.add(codigo);
+                        previous.stock += stock;
+                        if (!previous.nombre) previous.nombre = nombre;
+                        if (!previous.familia) previous.familia = familia;
+                        if (!previous.ventaValorizada) previous.ventaValorizada = ventaValorizada;
+                        return;
+                    }
+
+                    byCode.set(codigo, {
                         codigo,
                         nombre,
                         familia,
@@ -67,9 +109,11 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                 });
 
                 resolve({
-                    rows,
+                    rows: [...byCode.values()],
                     errors,
-                    totalRows: rawRows.length
+                    totalRows: rawRows.length,
+                    missingColumns,
+                    mergedCodes: [...mergedCodes]
                 });
             } catch (err) {
                 reject(new Error('Error al leer el archivo XLSX. Verifica que sea un archivo válido.'));

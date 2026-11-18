@@ -280,22 +280,31 @@
     <ol class="steps">
       <li>Exportá el inventario desde el sistema de caja en <code>.xlsx</code>, <code>.xls</code> o <code>.csv</code>.</li>
       <li>En <span class="ui">Inventario</span>, tocá <span class="ui">Importar Stock</span> y elegí el archivo.</li>
-      <li>Vas a ver una vista previa. Si está bien, confirmá y esperá a que la barra llegue a 100% sin cerrar la pantalla.</li>
+      <li>Antes de aplicar, te muestra un resumen: cuántos productos se actualizan, cuántos son nuevos, cuántos dejarían de verse en la tienda y cuántos cambian mucho de precio. Si está bien, tocá <span class="ui">Aplicar cambios</span>.</li>
       <li>Al final te dice cuántos productos se actualizaron y cuántos se crearon nuevos.</li>
     </ol>
+    <div class="note warn">
+      <strong>Si aparece un aviso en rojo</strong>
+      <p>Si el resumen se ve raro (muchos códigos que no existen, muchos productos que quedan sin stock o precios que cambian mucho), la tienda te avisa en rojo y te pide confirmar. Casi siempre es un Excel equivocado: revisalo antes de seguir. Si al archivo le falta alguna columna obligatoria, directamente no deja importarlo.</p>
+    </div>
+    <div class="note info">
+      <strong>Se puede deshacer</strong>
+      <p>Si importaste un archivo equivocado, abrí <span class="ui">Importar Stock</span> y tocá <span class="ui">Deshacer</span> en la última importación. Vuelven el stock, los precios y los nombres a como estaban, y se borran los productos que creó. Los pedidos que entraron mientras tanto se respetan. Solo se puede deshacer la última importación.</p>
+    </div>
     <h3>Qué columnas lee</h3>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Columna del Excel</th><th>Para qué la usa</th></tr></thead>
         <tbody>
-          <tr><td><strong>Código</strong></td><td>Identifica el producto. Una fila sin código se saltea.</td></tr>
-          <tr><td>Nombre</td><td>Nombre del producto.</td></tr>
+          <tr><td><strong>Código</strong> *</td><td>Identifica el producto. Una fila sin código se saltea. Si un código aparece en varias filas (por ejemplo, dos depósitos), se suma el stock.</td></tr>
+          <tr><td>Nombre *</td><td>Nombre del producto. Si viene vacío, el producto conserva el que tenía.</td></tr>
           <tr><td>Familia</td><td>Subcategoría; de ahí sale la categoría de la tienda.</td></tr>
-          <tr><td>Stock</td><td>Stock físico. En productos por peso, en kg (<code>0,75</code> = 750 g).</td></tr>
-          <tr><td>Venta Valorizada</td><td>Precio de venta. En productos por peso, el precio del kilo.</td></tr>
+          <tr><td>Stock *</td><td>Stock físico. En productos por peso, en kg (<code>0,75</code> = 750 g).</td></tr>
+          <tr><td>Venta Valorizada *</td><td>Precio de venta. En productos por peso, el precio del kilo.</td></tr>
         </tbody>
       </table>
     </div>
+    <p>* Obligatorias: sin estas columnas no deja importar.</p>
     <h3>Lo que hace solo al importar</h3>
     <ul class="plain">
       <li>Al stock del Excel le <strong>resta lo reservado</strong> en pedidos web sin entregar, porque esa mercadería sigue en el local pero ya está vendida.</li>
@@ -383,7 +392,7 @@
     </details>
     <details>
       <summary>Importé un Excel equivocado</summary>
-      <div><p>Importá el correcto y se corrige. Si no lo tenés a mano, avisale a Javier antes de seguir tomando pedidos.</p></div>
+      <div><p>Abrí <span class="ui">Importar Stock</span> en Inventario y tocá <span class="ui">Deshacer</span> en la última importación. Todo vuelve a como estaba antes.</p></div>
     </details>
   </section>
 

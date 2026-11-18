@@ -309,7 +309,8 @@ const StoreContext = createContext<{
     updatePromotions: (hero?: HeroPromo, featured?: FeaturedPromo, instagram?: InstagramPromo) => Promise<void>;
     toggleNewArrival: (productId: string) => Promise<void>;
     markOrdersAsRead: () => void;
-    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[], onProgress?: (percent: number) => void) => Promise<{ updated: number; created: number; errors: string[] }>;
+    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => Promise<{ updated: number; created: number }>;
+    undoLastImport: () => Promise<{ restored: number; deleted: number; hidden: number }>;
     formatWeight: (val: number, isFractional?: boolean) => string;
     refreshProducts: () => Promise<void>;
 } | undefined>(undefined);
@@ -649,9 +650,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return orderId;
     };
 
-    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[], onProgress?: (percent: number) => void) => {
-        const result = await supabaseService.bulkUpsertFromImport(rows, onProgress);
-        // Refresh products after import
+    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => {
+        const result = await supabaseService.importStock(rows);
+        const products = await supabaseService.getProducts();
+        dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
+        return result;
+    };
+
+    const undoLastImport = async () => {
+        const result = await supabaseService.undoLastImport();
         const products = await supabaseService.getProducts();
         dispatch({ type: 'SET_INITIAL_DATA', data: { products } });
         return result;
@@ -665,7 +672,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (
         <StoreContext.Provider value={{
             state, dispatch, addProduct, updateProduct, deleteProduct, updateStock,
-            placeOrder, updateOrderStatus, updateDeliveryFees, updatePromotions, importStockFile,
+            placeOrder, updateOrderStatus, updateDeliveryFees, updatePromotions, importStockFile, undoLastImport,
             toggleNewArrival,
             markOrdersAsRead,
             formatWeight: state.formatWeight,

@@ -1,12 +1,12 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { CATEGORIES_MAP } from '../utils/categoryMapping';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
-import { parseStockXLSX, ParseResult } from '../utils/xlsxParser';
+import ImportStockModal from '../components/ImportStockModal';
 
 const Inventory = () => {
-    const { state, deleteProduct, updateStock, importStockFile, formatWeight, toggleNewArrival, refreshProducts } = useStore();
+    const { state, deleteProduct, updateStock, formatWeight, toggleNewArrival, refreshProducts } = useStore();
     const { showToast, showConfirm } = useNotifications();
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('Todo');
@@ -16,12 +16,6 @@ const Inventory = () => {
 
     // Import modal state
     const [showImport, setShowImport] = useState(false);
-    const [importData, setImportData] = useState<ParseResult | null>(null);
-    const [isImporting, setIsImporting] = useState(false);
-    const [importProgress, setImportProgress] = useState(0);
-    const [importResult, setImportResult] = useState<{ updated: number; created: number; errors: string[] } | null>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const categories = useMemo(() => {
         return ['Todo', ...Object.keys(CATEGORIES_MAP)];
@@ -140,69 +134,6 @@ const Inventory = () => {
     const totalItems = state.products.length;
     const lowStockCount = state.products.filter(p => p.availableStock < 5 && p.availableStock > 0).length;
     const outOfStockCount = state.products.filter(p => p.availableStock === 0).length;
-
-    // --- Import handlers ---
-    const handleFileSelected = useCallback(async (file: File) => {
-        try {
-            const result = await parseStockXLSX(file);
-            setImportData(result);
-            setImportResult(null);
-            if (result.rows.length === 0) {
-                showToast('El archivo no contiene datos válidos.', 'error');
-            }
-        } catch (err: any) {
-            showToast(err.message || 'Error al leer el archivo', 'error');
-        }
-    }, [showToast]);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file) handleFileSelected(file);
-    }, [handleFileSelected]);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
-
-    const handleDragLeave = useCallback(() => setIsDragging(false), []);
-
-    const handleImport = async () => {
-        if (!importData) return;
-        setIsImporting(true);
-        setImportProgress(0);
-        try {
-            const result = await importStockFile(
-                importData.rows.map(r => ({
-                    codigo: r.codigo,
-                    nombre: r.nombre,
-                    familia: r.familia,
-                    stock: r.stock,
-                    ventaValorizada: r.ventaValorizada
-                })),
-                (percent) => {
-                    setImportProgress(percent);
-                }
-            );
-            setImportResult(result);
-            showToast(`Importación completa: ${result.updated} actualizados, ${result.created} nuevos.`, 'success');
-        } catch (err: any) {
-            showToast('Error durante la importación: ' + (err.message || ''), 'error');
-        } finally {
-            setIsImporting(false);
-        }
-    };
-
-    const closeImportModal = () => {
-        if (isImporting) return; // Prevent closing while importing
-        setShowImport(false);
-        setImportData(null);
-        setImportResult(null);
-        setIsDragging(false);
-        setImportProgress(0);
-    };
 
     return (
         <div className="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-200 min-h-screen pb-24 relative not-italic">
@@ -479,225 +410,7 @@ const Inventory = () => {
             </nav>
 
             {/* Import XLSX Modal */}
-            {showImport && (
-                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
-                    {/* Backdrop */}
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeImportModal} />
-
-                    {/* Modal */}
-                    <div className="relative w-full sm:max-w-xl max-h-[90vh] bg-white dark:bg-surface-dark rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center">
-                                    <span aria-hidden="true" className="material-symbols-outlined text-primary">upload_file</span>
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-left">Importar Stock</h2>
-                                    <p className="text-[11px] text-slate-400 text-left">Desde archivo fiscal (.xlsx)</p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={closeImportModal} 
-                                disabled={isImporting}
-                                className={`w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-opacity ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                <span aria-hidden="true" className="material-symbols-outlined text-lg">close</span>
-                            </button>
-                        </div>
-
-                        {/* Body */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                            {/* Drop zone */}
-                            {!importData && (
-                                <div
-                                    onDrop={handleDrop}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={`
-                                        border-2 border-dashed rounded-3xl p-10 text-center cursor-pointer transition-all
-                                        ${isDragging
-                                            ? 'border-primary bg-primary/5 scale-[1.02]'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5'}
-                                    `}
-                                >
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".xlsx,.xls,.csv"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) handleFileSelected(file);
-                                        }}
-                                    />
-                                    <span aria-hidden="true" className="material-symbols-outlined text-5xl text-primary/60 mb-3 block">cloud_upload</span>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                        {isDragging ? '¡Soltar archivo aquí!' : 'Arrastrá o tocá para seleccionar'}
-                                    </p>
-                                    <p className="text-[11px] text-slate-400">Formatos: .xlsx, .xls, .csv</p>
-                                </div>
-                            )}
-
-                            {/* Preview */}
-                            {importData && !importResult && (
-                                <div className="space-y-4">
-                                    {isImporting ? (
-                                        <div className="flex flex-col items-center justify-center py-10 px-4 space-y-6 animate-in fade-in duration-300">
-                                            <div className="relative flex items-center justify-center">
-                                                <div className="w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-800 border-t-primary animate-spin"></div>
-                                                <span className="absolute text-lg font-bold text-slate-800 dark:text-slate-200">{importProgress}%</span>
-                                            </div>
-                                            <div className="text-center space-y-2">
-                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Importando inventario...</p>
-                                                <p className="text-[11px] text-slate-400">Procesando {importProgress}% ({Math.min(Math.round(importData.rows.length * (importProgress / 100)), importData.rows.length)} de {importData.rows.length} productos)</p>
-                                            </div>
-                                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden shadow-inner">
-                                                <div 
-                                                    className="bg-primary h-2 rounded-full transition-all duration-300 ease-out" 
-                                                    style={{ width: `${importProgress}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-bold">{importData.rows.length} productos encontrados</p>
-                                            {importData.errors.length > 0 && (
-                                                <p className="text-[11px] text-orange-500">{importData.errors.length} filas con errores</p>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={() => { setImportData(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                                            className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
-                                        >
-                                            <span aria-hidden="true" className="material-symbols-outlined text-sm">refresh</span>
-                                            Otro archivo
-                                        </button>
-                                    </div>
-
-                                    {/* Preview table */}
-                                    <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
-                                        <table className="w-full text-xs">
-                                            <thead>
-                                                <tr className="bg-slate-50 dark:bg-slate-800/50">
-                                                    <th className="px-3 py-2 text-left font-bold text-slate-500 uppercase tracking-widest text-[11px]">Código</th>
-                                                    <th className="px-3 py-2 text-left font-bold text-slate-500 uppercase tracking-widest text-[11px]">Nombre</th>
-                                                    <th className="px-3 py-2 text-right font-bold text-slate-500 uppercase tracking-widest text-[11px]">Stock</th>
-                                                    <th className="px-3 py-2 text-right font-bold text-slate-500 uppercase tracking-widest text-[11px]">Precio</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {importData.rows.slice(0, 15).map((row, i) => (
-                                                    <tr key={i} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                                        <td className="px-3 py-2 text-left font-mono text-slate-600 dark:text-slate-400">{row.codigo}</td>
-                                                        <td className="px-3 py-2 text-left truncate max-w-[180px]">{row.nombre}</td>
-                                                        <td className="px-3 py-2 text-right font-bold">{row.stock}</td>
-                                                        <td className="px-3 py-2 text-right font-bold text-primary-dark dark:text-primary">$ {row.ventaValorizada.toFixed(2)}</td>
-                                                    </tr>
-                                                ))}
-                                                {importData.rows.length > 15 && (
-                                                    <tr className="border-t border-slate-100 dark:border-slate-800">
-                                                        <td colSpan={4} className="px-3 py-2 text-center text-slate-400 text-[11px]">
-                                                            ... y {importData.rows.length - 15} productos más
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Result summary */}
-                            {importResult && (
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                                            <span aria-hidden="true" className="material-symbols-outlined text-green-500 text-2xl">check_circle</span>
-                                        </div>
-                                        <div>
-                                            <p className="text-lg font-bold text-left">¡Importación completa!</p>
-                                            <p className="text-[11px] text-slate-400 text-left">El inventario se actualizó correctamente</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-2xl p-4 text-center">
-                                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{importResult.updated}</p>
-                                            <p className="text-[11px] font-bold text-blue-500 uppercase mt-1">Actualizados</p>
-                                        </div>
-                                        <div className="bg-green-50 dark:bg-green-900/10 rounded-2xl p-4 text-center">
-                                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{importResult.created}</p>
-                                            <p className="text-[11px] font-bold text-green-500 uppercase mt-1">Nuevos</p>
-                                        </div>
-                                        <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-4 text-center">
-                                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{importResult.errors.length}</p>
-                                            <p className="text-[11px] font-bold text-red-500 uppercase mt-1">Errores</p>
-                                        </div>
-                                    </div>
-
-                                    {importResult.errors.length > 0 && (
-                                        <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-3 max-h-32 overflow-y-auto">
-                                            {importResult.errors.map((err, i) => (
-                                                <p key={i} className="text-[11px] text-red-600 dark:text-red-400 py-0.5">{err}</p>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex gap-3">
-                            {!importResult ? (
-                                <>
-                                    <button
-                                        onClick={closeImportModal}
-                                        disabled={isImporting}
-                                        className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all ${isImporting ? 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-slate-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={handleImport}
-                                        disabled={!importData || importData.rows.length === 0 || isImporting}
-                                        className={`
-                                            flex-1 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all
-                                            ${importData && importData.rows.length > 0 && !isImporting
-                                                ? 'bg-primary text-slate-900 shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95'
-                                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}
-                                        `}
-                                    >
-                                        {isImporting ? (
-                                            <>
-                                                <span aria-hidden="true" className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
-                                                Importando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span aria-hidden="true" className="material-symbols-outlined text-lg">cloud_upload</span>
-                                                Aplicar Cambios
-                                            </>
-                                        )}
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={closeImportModal}
-                                    className="flex-1 py-3 rounded-2xl text-sm font-bold bg-primary text-slate-900 shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
-                                >
-                                    Cerrar
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            {showImport && <ImportStockModal onClose={() => setShowImport(false)} />}
         </div>
     );
 };

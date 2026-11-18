@@ -2,6 +2,14 @@ import { supabase, supabasePublic } from './supabaseClient';
 import { Product, Order, HeroPromo, FeaturedPromo, InstagramPromo, ProductSuggestion } from '../types';
 import { findParentCategory } from '../utils/categoryMapping';
 
+export type ImportRecord = {
+    id: string;
+    createdAt: string;
+    updated: number;
+    created: number;
+    undoneAt: string | null;
+};
+
 export const supabaseService = {
     // --- Products ---
     // Lectura pública: usa supabasePublic para que una sesión vencida nunca bloquee el catálogo.
@@ -234,100 +242,53 @@ export const supabaseService = {
     },
 
     // --- Bulk Import from XLSX ---
-    async bulkUpsertFromImport(
-        rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[],
-        onProgress?: (percent: number) => void
-    ): Promise<{ updated: number; created: number; errors: string[] }> {
-        let updated = 0;
-        let created = 0;
-        const errors: string[] = [];
+    // La importación corre entera en la base (función import_stock, ver
+    // supabase_importacion_segura.sql): todo o nada, y antes de pisar nada guarda
+    // cómo estaba cada producto para poder deshacerla.
+    async importStock(
+        rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]
+    ): Promise<{ updated: number; created: number }> {
+        const payload = rows.map(row => {
+            const subcategory = (row.familia || 'GENERAL').trim();
+            return {
+                codigo: (row.codigo || '').trim(),
+                name: (row.nombre || '').trim(),
+                // El Excel trae floats como 0.15000000000000002.
+                price: Number(row.ventaValorizada.toFixed(2)),
+                category: findParentCategory(subcategory),
+                subcategory,
+                stock: Number(row.stock.toFixed(3)),
+            };
+        });
 
-        try {
-            // 1. Fetch all existing product codigos and IDs in a single query
-            const { data: existingProducts, error: fetchError } = await supabase
-                .from('products')
-                .select('id, codigo, reserved_stock');
+        const { data, error } = await supabase.rpc('import_stock', { p_rows: payload });
+        if (error) throw error;
+        return { updated: data.updated, created: data.created };
+    },
 
-            if (fetchError) throw fetchError;
+    async getLastImport(): Promise<ImportRecord | null> {
+        const { data, error } = await supabase
+            .from('import_backups')
+            .select('id, created_at, updated_count, created_count, undone_at')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-            const existingMap = new Map<string, { id: string; reserved: number }>();
-            (existingProducts || []).forEach(p => {
-                if (p.codigo) {
-                    existingMap.set(p.codigo.trim(), { id: p.id, reserved: Number(p.reserved_stock) || 0 });
-                }
-            });
+        if (error) throw error;
+        if (!data) return null;
+        return {
+            id: data.id,
+            createdAt: data.created_at,
+            updated: data.updated_count,
+            created: data.created_count,
+            undoneAt: data.undone_at,
+        };
+    },
 
-            // El Excel trae floats como 0.15000000000000002: el stock va a gramos
-            // (3 decimales) y el precio a centavos.
-            const round = (n: number, decimals: number) => Number(n.toFixed(decimals));
-
-            // 2. Prepare records for upsert
-            const recordsToUpsert = rows.map(row => {
-                const subcategory = (row.familia || 'GENERAL').trim();
-                const category = findParentCategory(subcategory);
-                const cleanCodigo = (row.codigo || '').trim();
-
-                const existing = existingMap.get(cleanCodigo);
-                const price = round(row.ventaValorizada, 2);
-
-                if (existing) {
-                    updated++;
-                    // El Excel es el stock físico del local, que todavía incluye lo
-                    // reservado por pedidos web sin entregar. Un stock negativo del
-                    // sistema de caja (vendido de más) se toma como 0.
-                    return {
-                        id: existing.id,
-                        codigo: cleanCodigo,
-                        name: row.nombre,
-                        price,
-                        category: category,
-                        subcategory: subcategory,
-                        available_stock: Math.max(0, round(row.stock - existing.reserved, 3))
-                    };
-                } else {
-                    created++;
-                    return {
-                        codigo: cleanCodigo,
-                        name: row.nombre,
-                        description: row.nombre,
-                        price,
-                        category: category,
-                        subcategory: subcategory,
-                        image: '',
-                        unit: 'un.',
-                        available_stock: Math.max(0, round(row.stock, 3)),
-                        reserved_stock: 0
-                    };
-                }
-            });
-
-            // 3. Perform upsert in batches of 100
-            const batchSize = 100;
-            const totalRecords = recordsToUpsert.length;
-            for (let i = 0; i < totalRecords; i += batchSize) {
-                const batch = recordsToUpsert.slice(i, i + batchSize);
-                const { error: upsertError } = await supabase
-                    .from('products')
-                    .upsert(batch, { onConflict: 'codigo' });
-
-                if (upsertError) {
-                    console.error('Error in batch upsert:', upsertError);
-                    errors.push(`Error en lote ${Math.floor(i / batchSize) + 1}: ${upsertError.message}`);
-                }
-
-                if (onProgress) {
-                    const processed = Math.min(i + batchSize, totalRecords);
-                    const percent = Math.round((processed / totalRecords) * 100);
-                    onProgress(percent);
-                }
-            }
-
-        } catch (err: any) {
-            console.error('Bulk import general error:', err);
-            errors.push(`Error general de importación: ${err.message}`);
-        }
-
-        return { updated, created, errors };
+    async undoLastImport(): Promise<{ restored: number; deleted: number; hidden: number }> {
+        const { data, error } = await supabase.rpc('undo_last_import');
+        if (error) throw error;
+        return data;
     },
 
     // --- Product Suggestions ---
