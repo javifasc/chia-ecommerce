@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía del panel #CHIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Guía de bolsillo para el dueño: una columna pensada para el celular,
+     índice fijo arriba y una sección por tarea del día a día. */
+  :root {
+    --bg: #fbf9f4;
+    --surface: #ffffff;
+    --ink: #35322f;
+    --muted: #6b6661;
+    --line: #e9ece5;
+    --accent: #35800a;
+    --accent-soft: #eef6e4;
+    --warn: #b35c00;
+    --warn-soft: #fdf1e3;
+    --danger: #b42318;
+    --danger-soft: #fdecea;
+    --info: #1f5fa8;
+    --info-soft: #e8f0fb;
+    --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1c18;
+      --surface: #252b21;
+      --ink: #ecebe6;
+      --muted: #a9a59f;
+      --line: #343b2f;
+      --accent: #7ed23a;
+      --accent-soft: #2c3a20;
+      --warn: #f0a85a;
+      --warn-soft: #3a2c1c;
+      --danger: #f08a80;
+      --danger-soft: #3d2220;
+      --info: #8bb8f0;
+      --info-soft: #1f2c3d;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1c18;
+    --surface: #252b21;
+    --ink: #ecebe6;
+    --muted: #a9a59f;
+    --line: #343b2f;
+    --accent: #7ed23a;
+    --accent-soft: #2c3a20;
+    --warn: #f0a85a;
+    --warn-soft: #3a2c1c;
+    --danger: #f08a80;
+    --danger-soft: #3d2220;
+    --info: #8bb8f0;
+    --info-soft: #1f2c3d;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  a { color: var(--accent); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  header.top { max-width: 720px; margin: 0 auto; padding: 32px 20px 8px; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  h1 { font-size: clamp(28px, 6vw, 36px); line-height: 1.15; font-weight: 800; margin: 0 0 10px; text-wrap: balance; }
+  .lede { color: var(--muted); margin: 0; max-width: 60ch; }
+
+  nav.toc {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav.toc ul {
+    max-width: 720px; margin: 0 auto; padding: 10px 20px; list-style: none;
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  }
+  nav.toc ul::-webkit-scrollbar { display: none; }
+  nav.toc a {
+    display: block; white-space: nowrap; text-decoration: none;
+    font-size: 13px; font-weight: 600; color: var(--ink);
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+  }
+  nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+  main { max-width: 720px; margin: 0 auto; padding: 8px 20px 64px; display: flex; flex-direction: column; gap: 40px; }
+  section > h2 {
+    font-size: 22px; line-height: 1.25; font-weight: 800; margin: 0 0 4px; text-wrap: balance;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .num { font-size: 13px; font-weight: 800; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; flex: none; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
+  h3 { font-size: 16px; font-weight: 700; margin: 22px 0 8px; }
+  p { margin: 0 0 12px; max-width: 65ch; }
+
+  ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 10px; }
+  ol.steps > li {
+    counter-increment: s; position: relative; padding: 12px 14px 12px 50px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  }
+  ol.steps > li::before {
+    content: counter(s); position: absolute; left: 14px; top: 12px;
+    width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 13px; font-weight: 800; color: #fff; background: var(--accent);
+  }
+  :root[data-theme="dark"] ol.steps > li::before { color: #1a1c18; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) ol.steps > li::before { color: #1a1c18; } }
+  ul.plain { padding-left: 20px; margin: 0 0 12px; }
+  ul.plain li { margin-bottom: 6px; }
+
+  .ui {
+    font-weight: 700; white-space: nowrap;
+    background: var(--accent-soft); color: var(--ink);
+    padding: 1px 7px; border-radius: 6px; font-size: .92em;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; background: var(--line); padding: 1px 6px; border-radius: 5px; word-break: break-all; }
+
+  .note { border-radius: 14px; padding: 12px 14px; margin: 12px 0; font-size: 15px; border-left: 4px solid; }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong:first-child { display: block; margin-bottom: 2px; }
+  .note.ok { background: var(--accent-soft); border-color: var(--accent); }
+  .note.warn { background: var(--warn-soft); border-color: var(--warn); }
+  .note.danger { background: var(--danger-soft); border-color: var(--danger); }
+  .note.info { background: var(--info-soft); border-color: var(--info); }
+
+  /* Recorrido de un pedido */
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 8px; }
+  .stage {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 8px; text-align: center; position: relative;
+  }
+  .stage b { display: block; font-size: 14px; }
+  .stage span { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+  .stage .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-bottom: 4px; }
+  .cancel-row {
+    display: flex; align-items: center; gap: 10px; font-size: 14px;
+    background: var(--danger-soft); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;
+  }
+  .cancel-row .x { flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; color: var(--danger); background: var(--surface); border: 1px solid var(--line); }
+  @media (max-width: 460px) {
+    .flow { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); margin: 8px 0 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; }
+  summary { cursor: pointer; padding: 12px 14px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--accent); font-weight: 800; }
+  details[open] summary::after { content: "–"; }
+  details > div { padding: 0 14px 12px; font-size: 15px; }
+  details > div p:last-child { margin-bottom: 0; }
+
+  footer { max-width: 720px; margin: 0 auto; padding: 0 20px 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <p class="eyebrow">Para el dueño · Rada Tilly</p>
+  <h1>Guía del panel #CHIA</h1>
+  <p class="lede">Todo lo que hace falta para atender la tienda online: pedidos, stock, productos nuevos y portada. Cada sección es una tarea; leela cuando la necesites.</p>
+</header>
+
+<nav class="toc" aria-label="Secciones">
+  <ul>
+    <li><a href="#entrar">Entrar</a></li>
+    <li><a href="#pedidos">Pedidos</a></li>
+    <li><a href="#inventario">Stock</a></li>
+    <li><a href="#importar">Importar Excel</a></li>
+    <li><a href="#producto">Producto nuevo</a></li>
+    <li><a href="#portada">Portada</a></li>
+    <li><a href="#envios">Envíos</a></li>
+    <li><a href="#automatico">Lo automático</a></li>
+    <li><a href="#problemas">Si algo falla</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <section id="entrar">
+    <h2><span class="num">1</span>Entrar al panel</h2>
+    <p class="sub">El panel es la parte privada de la tienda. Solo entran las cuentas marcadas como dueño.</p>
+    <ol class="steps">
+      <li>Abrí <code>chia-ecommerce.vercel.app/admin/login</code> y guardala en favoritos o en la pantalla de inicio del celular.</li>
+      <li>Ingresá con tu email y contraseña de dueño. Entrás directo al <span class="ui">Panel</span>.</li>
+      <li>Abajo tenés la barra con las cuatro secciones: <span class="ui">Panel</span>, <span class="ui">Pedidos</span>, <span class="ui">Inventario</span> y <span class="ui">Nuevo</span>.</li>
+    </ol>
+    <div class="note info">
+      <strong>Atajo escondido</strong>
+      <p>Desde la tienda también se llega: en <span class="ui">Mi Perfil</span>, tocá 5 veces seguidas el logo de abajo de todo.</p>
+    </div>
+    <h3>Qué muestra el Panel</h3>
+    <ul class="plain">
+      <li><strong>Ticket promedio, pedidos pendientes y stock bajo</strong> (productos con menos de 5 unidades).</li>
+      <li><strong>Ventas y facturación por día</strong> y los <strong>productos más vendidos</strong>. Solo cuentan los pedidos <em>entregados</em>; los cancelados no suman.</li>
+      <li>Accesos a la configuración de envíos y a la portada.</li>
+    </ul>
+  </section>
+
+  <section id="pedidos">
+    <h2><span class="num">2</span>Atender un pedido</h2>
+    <p class="sub">Los pedidos llegan solos a <span class="ui">Pedidos</span>, con un punto rojo en la barra. El cliente además te manda el resumen por WhatsApp.</p>
+
+    <div class="flow" role="list" aria-label="Estados de un pedido">
+      <div class="stage" role="listitem"><i class="dot" style="background:#f4a261"></i><b>Pendiente</b><span>Recién llegó</span></div>
+      <div class="stage" role="listitem"><i class="dot" style="background:#5b8fd6"></i><b>Preparación</b><span>Lo estás armando</span></div>
+      <div class="stage" role="listitem"><i class="dot" style="background:#51b800"></i><b>Listo</b><span>Esperando retiro o envío</span></div>
+      <div class="stage" role="listitem"><i class="dot" style="background:#9a958f"></i><b>Entregado</b><span>Pasa al historial</span></div>
+    </div>
+    <div class="cancel-row"><span class="x" aria-hidden="true">✕</span><span>Desde cualquier estado activo podés <strong>cancelar</strong>: el pedido va al historial tachado.</span></div>
+
+    <ol class="steps">
+      <li>Abrí <span class="ui">Pedidos</span>. Cada columna es un estado; en el celular se desliza de costado. El botón de lista cambia a una vista compacta.</li>
+      <li>Revisá productos, forma de entrega y dirección en la tarjeta. Confirmá con el cliente por WhatsApp.</li>
+      <li>Tocá <span class="ui">Siguiente →</span> para avanzarlo de estado. En <em>Listo</em> el botón dice <span class="ui">Entregar</span>.</li>
+      <li>Si el cliente se arrepiente o no se puede cumplir, tocá la <span class="ui">✕</span> de la tarjeta y confirmá.</li>
+    </ol>
+
+    <h3>Qué pasa con el stock en cada paso</h3>
+    <p>No hace falta tocar el stock a mano por los pedidos: se mueve solo.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cuando el pedido…</th><th>Disponible</th><th>Reservado</th></tr></thead>
+        <tbody>
+          <tr><td>Entra (Pendiente)</td><td>baja</td><td>sube</td></tr>
+          <tr><td>Pasa a Preparación o Listo</td><td>igual</td><td>igual</td></tr>
+          <tr><td>Se entrega</td><td>igual</td><td>baja (ya salió del local)</td></tr>
+          <tr><td>Se cancela</td><td>vuelve a subir</td><td>baja</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <strong>Entregar no tiene vuelta atrás desde el panel</strong>
+      <p>Si marcaste <em>Entregado</em> por error, avisale a Javier y lo corrige. Lo que no hace falta es ajustar el stock a mano: se descontaría dos veces.</p>
+    </div>
+    <p>El ícono de reloj arriba a la derecha abre el <span class="ui">Historial</span> con entregados y cancelados. El ícono de lampazo solo limpia la vista, no borra nada.</p>
+  </section>
+
+  <section id="inventario">
+    <h2><span class="num">3</span>Revisar y ajustar el stock</h2>
+    <p class="sub">En <span class="ui">Inventario</span> están todos los productos agrupados por categoría.</p>
+    <ul class="plain">
+      <li>Buscá por nombre o código. Los filtros arriba muestran solo una categoría o solo las novedades.</li>
+      <li>Cada producto dice <strong>Disponible</strong> (lo que se puede vender) y <strong>Reservado</strong> (lo que está en pedidos sin entregar), con una etiqueta: <em>Stock OK</em>, <em>Stock bajo</em> o <em>Agotado</em>.</li>
+      <li>Los botones <span class="ui">−</span> y <span class="ui">+</span> ajustan de a una unidad, o de a un paso en los productos por peso (por ejemplo 100 g). Sirven para correcciones chicas: una rotura, un conteo.</li>
+      <li>El lápiz abre la ficha del producto para editarla; el tacho lo borra (pide confirmación).</li>
+    </ul>
+    <div class="note info">
+      <strong>Para cambios grandes, usá el Excel</strong>
+      <p>Si cambian muchos precios o hiciste un conteo general, es más rápido y seguro importar el archivo del sistema de caja.</p>
+    </div>
+  </section>
+
+  <section id="importar">
+    <h2><span class="num">4</span>Importar el stock del sistema de caja</h2>
+    <p class="sub">Actualiza precios y stock de todos los productos de una vez, a partir del Excel que exporta el sistema fiscal.</p>
+    <ol class="steps">
+      <li>Exportá el inventario desde el sistema de caja en <code>.xlsx</code>, <code>.xls</code> o <code>.csv</code>.</li>
+      <li>En <span class="ui">Inventario</span>, tocá <span class="ui">Importar Stock</span> y elegí el archivo.</li>
+      <li>Vas a ver una vista previa. Si está bien, confirmá y esperá a que la barra llegue a 100% sin cerrar la pantalla.</li>
+      <li>Al final te dice cuántos productos se actualizaron y cuántos se crearon nuevos.</li>
+    </ol>
+    <h3>Qué columnas lee</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Columna del Excel</th><th>Para qué la usa</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Código</strong></td><td>Identifica el producto. Una fila sin código se saltea.</td></tr>
+          <tr><td>Nombre</td><td>Nombre del producto.</td></tr>
+          <tr><td>Familia</td><td>Subcategoría; de ahí sale la categoría de la tienda.</td></tr>
+          <tr><td>Stock</td><td>Stock físico. En productos por peso, en kg (<code>0,75</code> = 750 g).</td></tr>
+          <tr><td>Venta Valorizada</td><td>Precio de venta. En productos por peso, el precio del kilo.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Lo que hace solo al importar</h3>
+    <ul class="plain">
+      <li>Al stock del Excel le <strong>resta lo reservado</strong> en pedidos web sin entregar, porque esa mercadería sigue en el local pero ya está vendida.</li>
+      <li>Un stock negativo del sistema de caja se carga como 0.</li>
+      <li>Redondea el stock a gramos y el precio a centavos.</li>
+      <li>Lee bien los números argentinos: <code>1.500</code> es mil quinientos y <code>1.234,50</code> lleva coma decimal.</li>
+    </ul>
+    <div class="note danger">
+      <strong>El Excel pisa precio, nombre y categoría</strong>
+      <p>Si corregiste un nombre o un precio a mano en la tienda, la próxima importación lo vuelve a dejar como está en el sistema de caja. Hacé esos cambios en el sistema de caja.</p>
+    </div>
+  </section>
+
+  <section id="producto">
+    <h2><span class="num">5</span>Cargar un producto nuevo</h2>
+    <p class="sub">Desde <span class="ui">Nuevo</span> en la barra de abajo. Para editar uno existente, usá el lápiz en Inventario.</p>
+    <ol class="steps">
+      <li>Completá <strong>Nombre</strong>, <strong>Precio de venta</strong> y <strong>Stock</strong>: son obligatorios.</li>
+      <li>Elegí categoría y subcategoría para que aparezca en el lugar correcto de la tienda.</li>
+      <li>Agregá una descripción corta (se ve en el listado) y, si querés, la larga, la información nutricional y sellos como <em>Vegano, Sin TACC</em> separados por coma.</li>
+      <li>Tocá <span class="ui">Cambiar Imagen</span> para la foto y después guardá.</li>
+    </ol>
+    <h3>Productos que se venden por peso</h3>
+    <ul class="plain">
+      <li>Activá <span class="ui">¿Producto fraccionado?</span>.</li>
+      <li>En <span class="ui">Incremento en GRAMOS</span> poné de a cuánto suma el cliente cada vez: <code>100</code>, <code>250</code>… Va en gramos enteros.</li>
+      <li>El <strong>precio es por kilo</strong> y el <strong>stock va en kg</strong>: 2,5 kg se carga como <code>2.5</code>.</li>
+    </ul>
+    <div class="note warn">
+      <strong>Fotos de muchos productos</strong>
+      <p>Para cargar fotos de varios productos juntos, mandale los archivos a Javier con el nombre igual al código (<code>FRA20.jpg</code>): se suben todas de una y quedan más livianas que cargándolas una por una desde acá.</p>
+    </div>
+  </section>
+
+  <section id="portada">
+    <h2><span class="num">6</span>Cambiar la portada y las promociones</h2>
+    <p class="sub">En el <span class="ui">Panel</span>, tocá <span class="ui">Gestión de Portada</span>. Arriba hay una previsualización en vivo.</p>
+    <ul class="plain">
+      <li><strong>Banner principal:</strong> etiqueta (por ejemplo <em>Novedad</em>), título, descripción, texto del botón e imagen.</li>
+      <li><strong>Oferta destacada:</strong> nombre del producto, precio original, precio promo e imagen.</li>
+      <li><strong>Publicaciones de Instagram:</strong> en la app de Instagram, en la publicación, tocá <span class="ui">Compartir → Copiar enlace</span> y pegalo acá. Se pueden mostrar hasta 6.</li>
+    </ul>
+    <p>Tocá <span class="ui">Guardar</span>: los cambios se ven en la tienda al instante, sin publicar nada.</p>
+  </section>
+
+  <section id="envios">
+    <h2><span class="num">7</span>Envíos</h2>
+    <ul class="plain">
+      <li>En el <span class="ui">Panel</span>, en <span class="ui">Configuración de Envíos</span>, cambiás desde qué monto el envío es gratis. Hoy está en <strong>$35.000</strong> y aplica solo a Rada Tilly.</li>
+      <li>Los costos por zona son: Rada Tilly $500, Zona Centro $600, Zona Sur $800 y Zona Norte $1.000. Para cambiarlos, pedíselo a Javier.</li>
+      <li>El cliente también puede elegir retiro en el local, sin costo.</li>
+    </ul>
+  </section>
+
+  <section id="automatico">
+    <h2><span class="num">8</span>Lo que la tienda hace sola</h2>
+    <p class="sub">Para no preocuparte por estas cosas.</p>
+    <ul class="plain">
+      <li><strong>Un producto sin stock o sin precio no aparece</strong> en la tienda. Apenas le cargás las dos cosas, aparece.</li>
+      <li>El precio y el stock de cada pedido salen de la base, no de lo que manda el celular del cliente: nadie puede pedir a otro precio ni más de lo que hay.</li>
+      <li>En productos por peso, solo deja pedir múltiplos del incremento (si es de 100 g, no deja pedir 150 g).</li>
+      <li>Cada pedido tiene número propio (<code>#ORD-1042</code>) y queda asociado a la cuenta del cliente, que lo sigue en <span class="ui">Pedidos</span> desde su celular.</li>
+      <li>Los clientes pueden sugerir productos que no tenés. Los ves desde el ícono de la mano con corazón, arriba a la derecha del <span class="ui">Panel</span>, ordenados por cuántos los pidieron; el número naranja avisa cuántas hay.</li>
+    </ul>
+  </section>
+
+  <section id="problemas">
+    <h2><span class="num">9</span>Si algo no anda</h2>
+    <details>
+      <summary>Cargué un producto y no aparece en la tienda</summary>
+      <div><p>Revisá que tenga <strong>precio mayor a 0</strong> y <strong>stock disponible</strong>. Si tiene las dos cosas, refrescá la tienda.</p></div>
+    </details>
+    <details>
+      <summary>Un cliente dice que no puede comprar un producto por peso</summary>
+      <div><p>Si le queda menos de un incremento (por ejemplo 80 g con incremento de 100 g), no se puede pedir. Ajustá el stock o el incremento.</p></div>
+    </details>
+    <details>
+      <summary>Marqué un pedido como entregado por error</summary>
+      <div><p>No toques el stock. Avisale a Javier con el número de pedido y lo vuelve atrás.</p></div>
+    </details>
+    <details>
+      <summary>El stock no coincide con lo que hay en el local</summary>
+      <div><p>Importá el Excel del sistema de caja (sección 4). Si fue un error puntual, corregilo con <span class="ui">−</span> y <span class="ui">+</span> en Inventario.</p></div>
+    </details>
+    <details>
+      <summary>No me llegan los pedidos al panel</summary>
+      <div><p>Tocá el botón de refrescar en Inventario o recargá la página. Si siguen sin aparecer, revisá si el cliente te escribió por WhatsApp y avisale a Javier.</p></div>
+    </details>
+    <details>
+      <summary>Importé un Excel equivocado</summary>
+      <div><p>Importá el correcto y se corrige. Si no lo tenés a mano, avisale a Javier antes de seguir tomando pedidos.</p></div>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  Guía de noviembre de 2026, para el lanzamiento del 1 de diciembre. Ante cualquier duda, escribile a Javier.
+</footer>
+
+</body>
+</html>
