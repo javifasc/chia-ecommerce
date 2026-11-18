@@ -309,7 +309,7 @@ const StoreContext = createContext<{
     updatePromotions: (hero?: HeroPromo, featured?: FeaturedPromo, instagram?: InstagramPromo) => Promise<void>;
     toggleNewArrival: (productId: string) => Promise<void>;
     markOrdersAsRead: () => void;
-    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => Promise<{ updated: number; created: number }>;
+    importStockFile: (rows: { codigo: string; nombre: string; familia: string; stock: number; unitPrice: number | null }[]) => Promise<{ updated: number; created: number }>;
     undoLastImport: () => Promise<{ restored: number; deleted: number; hidden: number }>;
     formatWeight: (val: number, isFractional?: boolean) => string;
     refreshProducts: () => Promise<void>;
@@ -650,7 +650,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return orderId;
     };
 
-    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]) => {
+    const importStockFile = async (rows: { codigo: string; nombre: string; familia: string; stock: number; unitPrice: number | null }[]) => {
         const result = await supabaseService.importStock(rows);
         const products = await supabaseService.getProducts();
         dispatch({ type: 'SET_INITIAL_DATA', data: { products } });

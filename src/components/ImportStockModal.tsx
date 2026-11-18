@@ -310,7 +310,7 @@ const ImportStockModal = ({ onClose }: Props) => {
                                                         <td className="px-3 py-2 font-mono text-slate-600 dark:text-slate-400">{row.codigo}</td>
                                                         <td className="px-3 py-2 truncate max-w-[180px]">{row.nombre}</td>
                                                         <td className="px-3 py-2 text-right font-bold">{row.stock}</td>
-                                                        <td className="px-3 py-2 text-right font-bold text-primary-dark dark:text-primary">{money(row.ventaValorizada)}</td>
+                                                        <td className="px-3 py-2 text-right font-bold text-primary-dark dark:text-primary">{row.unitPrice === null ? '—' : money(row.unitPrice)}</td>
                                                     </tr>
                                                 ))}
                                                 {importData.rows.length > 10 && (

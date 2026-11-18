@@ -42,19 +42,19 @@ export function analyzeImport(rows: ParsedStockRow[], products: Product[]): Impo
 
     for (const row of rows) {
         const product = byCode.get(row.codigo.trim());
-        const price = Number(row.ventaValorizada.toFixed(2));
-
         if (!product) {
             created++;
-            if (row.stock > 0 && price > 0) createdVisible++;
+            if (row.stock > 0 && (row.unitPrice ?? 0) > 0) createdVisible++;
             continue;
         }
 
         matched++;
+        // Sin precio calculable (stock 0) se conserva el actual.
+        const price = row.unitPrice ?? product.price;
         const newAvailable = Math.max(0, row.stock - product.reservedStock);
         if (isForSale(product) && !(newAvailable > 0 && price > 0)) leavingStore++;
 
-        if (product.price > 0 && price > 0 && Math.abs(price - product.price) / product.price > BIG_CHANGE) {
+        if (row.unitPrice !== null && product.price > 0 && price > 0 && Math.abs(price - product.price) / product.price > BIG_CHANGE) {
             bigPriceChanges++;
             if (priceExamples.length < 3) priceExamples.push({ name: product.name, from: product.price, to: price });
         }

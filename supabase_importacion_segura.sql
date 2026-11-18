@@ -26,6 +26,8 @@ create policy import_backups_select_admin on public.import_backups
 -- Sin políticas de escritura: solo las funciones de abajo (security definer) escriben.
 
 -- p_rows: [{codigo, name, price, category, subcategory, stock}], sin códigos repetidos.
+-- price es el precio de UNA unidad (o del kilo). null = conservar el precio actual
+-- (pasa con stock 0: el Excel solo trae el total valorizado y no se puede dividir).
 create or replace function public.import_stock(p_rows jsonb)
 returns jsonb
 language plpgsql
@@ -57,13 +59,13 @@ begin
     loop
         v_codigo := trim(coalesce(v_row->>'codigo', ''));
         v_name   := trim(coalesce(v_row->>'name', ''));
-        v_price  := round((v_row->>'price')::numeric, 2);
+        v_price  := round((v_row->>'price')::numeric, 2);  -- null si no viene
         v_stock  := round((v_row->>'stock')::numeric, 3);
 
         if v_codigo = '' then
             raise exception 'Hay una fila sin código';
         end if;
-        if v_price is null or v_price < 0 or v_stock is null then
+        if (v_price is not null and v_price < 0) or v_stock is null then
             raise exception 'Valores inválidos en el código %', v_codigo;
         end if;
 
@@ -87,7 +89,7 @@ begin
             update public.products set
                 -- Nunca dejar un producto sin nombre.
                 name            = case when v_name <> '' then v_name else name end,
-                price           = v_price,
+                price           = coalesce(v_price, price),
                 category        = coalesce(nullif(v_row->>'category', ''), category),
                 subcategory     = coalesce(nullif(v_row->>'subcategory', ''), subcategory),
                 available_stock = v_new_avail
@@ -101,7 +103,7 @@ begin
                 codigo, name, description, price, category, subcategory,
                 image, unit, available_stock, reserved_stock
             ) values (
-                v_codigo, v_name, v_name, v_price,
+                v_codigo, v_name, v_name, coalesce(v_price, 0),
                 coalesce(nullif(v_row->>'category', ''), 'General'),
                 nullif(v_row->>'subcategory', ''),
                 '', 'un.', greatest(0, v_stock), 0

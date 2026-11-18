@@ -6,7 +6,13 @@ export type ParsedStockRow = {
     familia: string;
     stock: number;
     costoValorizado: number;
+    /** Total de la fila (precio unitario × stock), como lo exporta el sistema de caja. */
     ventaValorizada: number;
+    /**
+     * Precio de UNA unidad (o del kilo, en productos por peso).
+     * null = no se puede calcular (stock 0 con solo el valorizado): se conserva el precio actual.
+     */
+    unitPrice: number | null;
     deposito: string;
 };
 
@@ -27,7 +33,10 @@ const ALIASES = {
     deposito: ['Depósito', 'Deposito', 'deposito', 'DEPOSITO', 'Deposit'],
     stock: ['Stock', 'stock', 'STOCK', 'Cantidad', 'Qty'],
     costo: ['Costo Valorizado', 'Costo', 'costo', 'COSTO', 'Cost'],
-    venta: ['Venta Valorizada', 'Venta', 'venta', 'VENTA', 'Precio', 'Price'],
+    // "Venta Valorizada" es el TOTAL de la fila (precio × stock), no el precio.
+    // Se guardaba tal cual como precio: un producto con 27 unidades quedaba 27 veces más caro.
+    ventaTotal: ['Venta Valorizada', 'Venta', 'venta', 'VENTA'],
+    precioUnitario: ['Precio Unitario', 'Precio', 'precio', 'PRECIO', 'Price'],
 };
 
 // Sin estas columnas el valor faltante se leía como vacío o 0 y pisaba la tienda
@@ -36,8 +45,10 @@ const REQUIRED: { label: string; aliases: string[] }[] = [
     { label: 'Código', aliases: ALIASES.codigo },
     { label: 'Nombre', aliases: ALIASES.nombre },
     { label: 'Stock', aliases: ALIASES.stock },
-    { label: 'Venta Valorizada (precio)', aliases: ALIASES.venta },
+    { label: 'Venta Valorizada o Precio', aliases: [...ALIASES.ventaTotal, ...ALIASES.precioUnitario] },
 ];
+
+const round2 = (n: number) => Number(n.toFixed(2));
 
 /**
  * Parsea un archivo XLSX del software fiscal y extrae las filas relevantes.
@@ -74,7 +85,8 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                     const deposito = String(findCol(row, ALIASES.deposito) || '').trim();
                     const stockRaw = findCol(row, ALIASES.stock);
                     const costoRaw = findCol(row, ALIASES.costo);
-                    const ventaRaw = findCol(row, ALIASES.venta);
+                    const ventaRaw = findCol(row, ALIASES.ventaTotal);
+                    const precioRaw = findCol(row, ALIASES.precioUnitario);
 
                     if (!codigo) {
                         errors.push(`Fila ${index + 2}: Sin código, se omite.`);
@@ -84,6 +96,8 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                     const stock = parseNumber(stockRaw);
                     const costoValorizado = parseNumber(costoRaw);
                     const ventaValorizada = parseNumber(ventaRaw);
+                    // Si el archivo trae precio unitario, se usa ese; si no, se calcula después.
+                    const unitPrice = precioRaw !== undefined ? round2(parseNumber(precioRaw)) : null;
 
                     // Un código repetido (otro depósito) hacía fallar un lote entero de
                     // la importación: ahora se suma el stock y se avisa.
@@ -91,9 +105,11 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                     if (previous) {
                         mergedCodes.add(codigo);
                         previous.stock += stock;
+                        // El valorizado es un total: se suma igual que el stock.
+                        previous.ventaValorizada += ventaValorizada;
                         if (!previous.nombre) previous.nombre = nombre;
                         if (!previous.familia) previous.familia = familia;
-                        if (!previous.ventaValorizada) previous.ventaValorizada = ventaValorizada;
+                        if (previous.unitPrice === null) previous.unitPrice = unitPrice;
                         return;
                     }
 
@@ -104,8 +120,17 @@ export function parseStockXLSX(file: File): Promise<ParseResult> {
                         stock,
                         costoValorizado,
                         ventaValorizada,
+                        unitPrice,
                         deposito
                     });
+                });
+
+                // Sin precio unitario en el archivo: valorizado ÷ stock. Con stock 0 o
+                // negativo no hay forma de saberlo, y se conserva el precio que ya tenía.
+                byCode.forEach(row => {
+                    if (row.unitPrice === null && row.stock > 0) {
+                        row.unitPrice = round2(row.ventaValorizada / row.stock);
+                    }
                 });
 
                 resolve({

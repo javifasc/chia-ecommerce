@@ -246,15 +246,15 @@ export const supabaseService = {
     // supabase_importacion_segura.sql): todo o nada, y antes de pisar nada guarda
     // cómo estaba cada producto para poder deshacerla.
     async importStock(
-        rows: { codigo: string; nombre: string; familia: string; stock: number; ventaValorizada: number }[]
+        rows: { codigo: string; nombre: string; familia: string; stock: number; unitPrice: number | null }[]
     ): Promise<{ updated: number; created: number }> {
         const payload = rows.map(row => {
             const subcategory = (row.familia || 'GENERAL').trim();
             return {
                 codigo: (row.codigo || '').trim(),
                 name: (row.nombre || '').trim(),
-                // El Excel trae floats como 0.15000000000000002.
-                price: Number(row.ventaValorizada.toFixed(2)),
+                // Precio de una unidad (o del kilo). null = conservar el que tiene.
+                price: row.unitPrice === null ? null : Number(row.unitPrice.toFixed(2)),
                 category: findParentCategory(subcategory),
                 subcategory,
                 stock: Number(row.stock.toFixed(3)),
