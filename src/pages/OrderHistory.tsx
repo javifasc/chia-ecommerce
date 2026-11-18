@@ -1,8 +1,9 @@
 import { useStore } from '../context/StoreContext';
 import { Link } from 'react-router-dom';
+import { formatOrderQuantity } from '../utils/productUtils';
 
 const OrderHistory = () => {
-    const { state } = useStore();
+    const { state, formatWeight } = useStore();
 
     const totalEarnings = state.historyOrders
         .filter(order => order.status === 'Entregado')
@@ -83,7 +84,7 @@ const OrderHistory = () => {
                                         {order.items.map((item, i) => (
                                             <div key={i} className="flex justify-between items-center text-xs">
                                                 <p className="text-slate-500">
-                                                    <span className="font-bold text-slate-700 dark:text-slate-300">{item.quantity}x</span> {item.name}
+                                                    <span className="font-bold text-slate-700 dark:text-slate-300">{formatOrderQuantity(state.products, item, formatWeight)}</span> {item.name}
                                                 </p>
                                                 <span className="text-slate-400">$ {(item.price * item.quantity).toFixed(2)}</span>
                                             </div>

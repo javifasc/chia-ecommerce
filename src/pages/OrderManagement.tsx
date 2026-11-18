@@ -2,18 +2,27 @@ import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { useStore, OrderStatus } from '../context/StoreContext';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
+import { formatOrderQuantity } from '../utils/productUtils';
+
+/** Link de WhatsApp al cliente: los teléfonos se guardan sin 549 (ej: 2974174655). */
+const customerWhatsApp = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    return `https://wa.me/${digits.startsWith('54') ? digits : `549${digits}`}`;
+};
 
 const columns: { label: string; status: OrderStatus; color: string }[] = [
     { label: 'Pendiente', status: 'Pendiente', color: 'bg-orange-400' },
     { label: 'En Preparación', status: 'Preparación', color: 'bg-blue-400' },
     { label: 'Listo', status: 'Listo', color: 'bg-green-400' },
-    { label: 'Entregado', status: 'Entregado', color: 'bg-slate-400' },
+    // Los entregados y cancelados pasan directo al historial.
 ];
 
 const OrderManagement = () => {
-    const { state, dispatch, updateOrderStatus, markOrdersAsRead } = useStore();
+    const { state, updateOrderStatus, markOrdersAsRead, formatWeight } = useStore();
     const { showConfirm, showToast } = useNotifications();
     const [viewType, setViewType] = useState<'kanban' | 'compact'>('kanban');
+    // Pedidos con un cambio en curso: evita que un doble toque saltee un estado.
+    const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
     const mainRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -36,12 +45,25 @@ const OrderManagement = () => {
     }, [state.orders]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+        if (pendingIds.has(orderId)) return;
+        setPendingIds(prev => new Set(prev).add(orderId));
         try {
             await updateOrderStatus(orderId, newStatus);
-            showToast(`Pedido actualizado a ${newStatus}`, 'success');
-        } catch (error) {
+            showToast(
+                newStatus === 'Entregado' ? 'Pedido entregado: pasó al historial'
+                    : newStatus === 'Cancelado' ? 'Pedido cancelado: el stock volvió a estar disponible'
+                        : `Pedido actualizado a ${newStatus}`,
+                'success'
+            );
+        } catch (error: any) {
             console.error('Error updating order status:', error);
-            showToast('Error al actualizar el estado del pedido', 'error');
+            showToast(error?.message || 'Error al actualizar el estado del pedido', 'error');
+        } finally {
+            setPendingIds(prev => {
+                const next = new Set(prev);
+                next.delete(orderId);
+                return next;
+            });
         }
     };
 
@@ -59,25 +81,6 @@ const OrderManagement = () => {
         const sequence: OrderStatus[] = ['Pendiente', 'Preparación', 'Listo', 'Entregado'];
         const idx = sequence.indexOf(current);
         return idx < sequence.length - 1 ? sequence[idx + 1] : null;
-    };
-
-    const handleClearDelivered = () => {
-        const deliveredCount = state.orders.filter(o => o.status === 'Entregado').length;
-        if (deliveredCount === 0) {
-            showToast('No hay pedidos entregados para limpiar.', 'info');
-            return;
-        }
-
-        showConfirm({
-            title: '¿Limpiar Pedidos?',
-            message: `¿Estás seguro de que quieres eliminar los ${deliveredCount} pedidos entregados? Esta acción no se puede deshacer.`,
-            confirmText: 'Limpiar',
-            isDestructive: true,
-            onConfirm: () => {
-                dispatch({ type: 'CLEAR_DELIVERED_ORDERS' });
-                showToast(`${deliveredCount} pedidos limpiados con éxito.`, 'success');
-            }
-        });
     };
 
     return (
@@ -101,13 +104,6 @@ const OrderManagement = () => {
                         title={viewType === 'kanban' ? 'Cambiar a vista compacta' : 'Cambiar a vista tablero'}
                     >
                         <span aria-hidden="true" className="material-symbols-outlined text-xl">{viewType === 'kanban' ? 'view_list' : 'view_kanban'}</span>
-                    </button>
-                    <button
-                        onClick={handleClearDelivered}
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-primary transition-colors"
-                        title="Limpiar entregados"
-                    >
-                        <span aria-hidden="true" className="material-symbols-outlined text-xl">mop</span>
                     </button>
                     <Link to="/admin" className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-slate-100">
                         <span aria-hidden="true" className="material-symbols-outlined text-xl">grid_view</span>
@@ -140,11 +136,22 @@ const OrderManagement = () => {
                                                 </span>
                                             </div>
                                             <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1 leading-tight">{order.customerName}</h3>
+                                            {order.customerPhone && (
+                                                <a
+                                                    href={customerWhatsApp(order.customerPhone)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#128C7E] hover:underline"
+                                                >
+                                                    <span aria-hidden="true" className="material-symbols-outlined text-[14px]">chat</span>
+                                                    {order.customerPhone}
+                                                </a>
+                                            )}
 
                                             <div className="space-y-1 my-3 bg-white/50 dark:bg-slate-800/50 p-2 rounded-xl">
                                                 {order.items.map((item, i) => (
                                                     <p key={i} className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                                                        <span className="text-primary-dark dark:text-primary font-bold">{item.quantity}x</span> {item.name}
+                                                        <span className="text-primary-dark dark:text-primary font-bold">{formatOrderQuantity(state.products, item, formatWeight)}</span> {item.name}
                                                     </p>
                                                 ))}
                                             </div>
@@ -173,6 +180,7 @@ const OrderManagement = () => {
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => handleCancel(order.id, order.customerName)}
+                                                        disabled={pendingIds.has(order.id)}
                                                         aria-label={`Cancelar pedido ${order.id}`}
                                                         title="Cancelar pedido"
                                                         className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -182,7 +190,8 @@ const OrderManagement = () => {
                                                     {getNextStatus(order.status) && (
                                                         <button
                                                             onClick={() => handleStatusChange(order.id, getNextStatus(order.status)!)}
-                                                            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-slate-900 text-[11px] font-bold rounded-xl shadow-md shadow-primary/20 active:scale-95 transition-all"
+                                                            disabled={pendingIds.has(order.id)}
+                                                            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-slate-900 text-[11px] font-bold rounded-xl shadow-md shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
                                                         >
                                                             {order.status === 'Listo' ? 'Entregar' : 'Siguiente'}
                                                             <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -218,13 +227,14 @@ const OrderManagement = () => {
                                                     <h3 className="font-bold text-slate-900 dark:text-white truncate">{order.customerName}</h3>
                                                 </div>
                                                 <p className="text-[11px] text-slate-400 truncate">
-                                                    {order.items.map(item => `${item.quantity}x ${item.name}`).join(', ')}
+                                                    {order.items.map(item => `${formatOrderQuantity(state.products, item, formatWeight)} ${item.name}`).join(', ')}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">$ {order.total.toFixed(2)}</span>
                                                 <button
                                                     onClick={() => handleCancel(order.id, order.customerName)}
+                                                        disabled={pendingIds.has(order.id)}
                                                     aria-label={`Cancelar pedido ${order.id}`}
                                                     title="Cancelar pedido"
                                                     className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
@@ -234,7 +244,8 @@ const OrderManagement = () => {
                                                 {getNextStatus(order.status) && (
                                                     <button
                                                         onClick={() => handleStatusChange(order.id, getNextStatus(order.status)!)}
-                                                        className="w-10 h-10 flex items-center justify-center bg-primary text-slate-900 rounded-xl shadow-md shadow-primary/10 active:scale-90 transition-all shrink-0"
+                                                            disabled={pendingIds.has(order.id)}
+                                                        className="w-10 h-10 flex items-center justify-center bg-primary text-slate-900 rounded-xl shadow-md shadow-primary/10 active:scale-90 transition-all shrink-0 disabled:opacity-50"
                                                     >
                                                         <span aria-hidden="true" className="material-symbols-outlined text-lg">arrow_forward</span>
                                                     </button>

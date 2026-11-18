@@ -54,7 +54,6 @@ type Action =
     | { type: 'DECREMENT_CART'; productId: string }
     | { type: 'REMOVE_FROM_CART'; productId: string }
     | { type: 'UPDATE_CART_QUANTITY'; productId: string; quantity: number }
-    | { type: 'CLEAR_DELIVERED_ORDERS' }
     | { type: 'UPDATE_DELIVERY_FEES'; fees: { [key: string]: number } }
     | { type: 'UPDATE_ORDER_STATUS'; orderId: string; status: OrderStatus }
     | { type: 'TOGGLE_FAVORITE'; productId: string }
@@ -215,12 +214,6 @@ function storeReducer(state: State, action: Action): State {
                 historyOrders: allOrders.filter(o => isClosedOrderStatus(o.status))
             };
         }
-
-        case 'CLEAR_DELIVERED_ORDERS':
-            return {
-                ...state,
-                historyOrders: []
-            };
 
         case 'UPDATE_DELIVERY_FEES': {
             const threshold = action.fees['_FREE_THRESHOLD_'] || 0;
@@ -501,7 +494,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     }
                 }, 100);
 
-                if (payload.eventType === 'INSERT') {
+                // El aviso y el sonido son para el dueño, no para el cliente que acaba de comprar.
+                if (payload.eventType === 'INSERT' && isAdmin) {
                     dispatch({ type: 'SET_UNREAD_ORDERS', hasUnread: true });
                     try {
                         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');

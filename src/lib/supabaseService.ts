@@ -156,14 +156,20 @@ export const supabaseService = {
     },
 
     async updateOrderStatus(orderId: string, status: string) {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('orders')
             .update({ status })
-            .eq('id', orderId);
+            .eq('id', orderId)
+            .select('id');
 
         // El stock lo mueve el trigger orders_status_stock de la base
         // (supabase_stock_estados.sql): no hay que tocarlo desde acá.
         if (error) throw error;
+        // Si la política de seguridad no deja actualizar (sesión vencida, no es admin),
+        // la base no da error: simplemente no cambia ninguna fila.
+        if (!data || data.length === 0) {
+            throw new Error('No se pudo guardar el cambio. Volvé a iniciar sesión e intentá de nuevo.');
+        }
     },
 
     // --- Delivery Fees ---

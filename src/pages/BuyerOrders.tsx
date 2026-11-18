@@ -1,9 +1,13 @@
 import { useStore } from '../context/StoreContext';
 import { Link } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
+import { formatOrderQuantity } from '../utils/productUtils';
 
 const BuyerOrders = () => {
-    const { state } = useStore();
+    const { state, formatWeight } = useStore();
+    // Los entregados y cancelados están en historyOrders: el cliente también tiene que verlos.
+    const myOrders = [...state.orders, ...state.historyOrders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (
         <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen pb-28 relative selection:bg-primary not-italic">
@@ -18,8 +22,8 @@ const BuyerOrders = () => {
             </header>
 
             <main className="px-5 py-6 space-y-4 text-left max-w-2xl mx-auto">
-                {state.orders.length > 0 ? (
-                    state.orders.map((order) => (
+                {myOrders.length > 0 ? (
+                    myOrders.map((order) => (
                         <div key={order.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 animate-in fade-in slide-in-from-bottom duration-300">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
@@ -41,13 +45,13 @@ const BuyerOrders = () => {
                             <div className="space-y-1 mb-4">
                                 {order.items.map((item, i) => (
                                     <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
-                                        <span className="font-bold">{item.quantity}x</span> {item.name}
+                                        <span className="font-bold">{formatOrderQuantity(state.products, item, formatWeight)}</span> {item.name}
                                     </p>
                                 ))}
                             </div>
 
                             <div className="flex items-center justify-between pt-3 border-t border-dashed border-slate-100 dark:border-slate-700">
-                                <span className="text-xs font-medium text-slate-400">Total pagado</span>
+                                <span className="text-xs font-medium text-slate-400">Total</span>
                                 <span className="text-base font-bold text-slate-900 dark:text-white">${order.total.toFixed(2)}</span>
                             </div>
                         </div>
