@@ -15,6 +15,7 @@ import {
     InstagramPromo,
     isClosedOrderStatus
 } from '../types';
+import { isForSale } from '../utils/productUtils';
 
 export type {
     InstagramPromo,
@@ -97,8 +98,16 @@ function storeReducer(state: State, action: Action): State {
         case 'SET_LOADING':
             return { ...state, isLoading: action.loading };
 
-        case 'SET_INITIAL_DATA':
-            return { ...state, ...action.data, isLoading: false };
+        case 'SET_INITIAL_DATA': {
+            const next = { ...state, ...action.data, isLoading: false };
+            // El carrito se guarda en el navegador y puede apuntar a productos que
+            // ya se borraron: los sacamos para que no traben la compra.
+            if (action.data.products) {
+                const ids = new Set(action.data.products.map(p => p.id));
+                next.cart = next.cart.filter(item => ids.has(item.productId));
+            }
+            return next;
+        }
 
         case 'SET_ORDERS':
             return {
@@ -112,8 +121,14 @@ function storeReducer(state: State, action: Action): State {
 
         case 'ADD_TO_CART': {
             const product = state.products.find(p => p.id === action.productId);
-            const step = product?.isFractional ? ((product.fractionalStep || 0) / 1000) : 1;
+            if (!product || !isForSale(product)) return state;
+            const step = product.isFractional ? ((product.fractionalStep || 0) / 1000) : 1;
             const existing = state.cart.find(item => item.productId === action.productId);
+
+            // No dejar pedir más de lo que hay: la base lo rechazaría al confirmar.
+            if (step <= 0 || Number(((existing?.quantity || 0) + step).toFixed(3)) > product.availableStock) {
+                return state;
+            }
 
             if (existing) {
                 return {
@@ -606,9 +621,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const placeOrder = async (orderData: any): Promise<string> => {
-        const orderItems = state.cart.map(cartItem => {
-            const product = state.products.find(p => p.id === cartItem.productId)!;
-            return { ...cartItem, name: product.name, price: product.price };
+        const orderItems = state.cart.flatMap(cartItem => {
+            const product = state.products.find(p => p.id === cartItem.productId);
+            return product ? [{ ...cartItem, name: product.name, price: product.price }] : [];
         });
 
         const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);

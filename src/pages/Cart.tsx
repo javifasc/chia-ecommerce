@@ -7,11 +7,21 @@ import { generateWhatsAppLink } from '../utils/whatsappUtils';
 import { sendOrderNotification } from '../utils/notificationService';
 import { useAuth } from '../context/AuthContext';
 import { useEffect } from 'react';
+import { isForSale } from '../utils/productUtils';
+
+/** Mensaje legible para el cliente: place_order devuelve el motivo en castellano. */
+const orderErrorMessage = (error: any): string => {
+    const msg = typeof error?.message === 'string' ? error.message : '';
+    // Errores de la función de la base (P0001 = raise exception): ya vienen en castellano.
+    if (error?.code === 'P0001' && msg) return msg;
+    if (/fetch|network/i.test(msg)) return 'No pudimos conectarnos. Revisá tu conexión e intentá de nuevo.';
+    return 'Hubo un error al procesar tu pedido. Por favor intentá de nuevo.';
+};
 
 
 const Cart = () => {
     const navigate = useNavigate();
-    const { state, dispatch, placeOrder, formatWeight } = useStore();
+    const { state, dispatch, placeOrder, formatWeight, refreshProducts } = useStore();
     const { showToast } = useNotifications();
     const { profile, isAuthenticated } = useAuth();
     const [customerName, setCustomerName] = useState(profile?.full_name || '');
@@ -21,7 +31,8 @@ const Cart = () => {
     const [deliveryMethod, setDeliveryMethod] = useState<'Retiro' | 'Envío'>('Retiro');
     const [address, setAddress] = useState(profile?.address || '');
     const [deliveryZone, setDeliveryZone] = useState<string>('Rada Tilly');
-    const [lastOrderSummary, setLastOrderSummary] = useState<{ items: any[], total: number } | null>(null);
+    const [lastOrderSummary, setLastOrderSummary] = useState<{ items: { name: string; quantity: string; lineTotal: number }[], total: number } | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Sync profile data when it loads
     useEffect(() => {
@@ -40,9 +51,25 @@ const Cart = () => {
             const product = state.products.find(p => p.id === item.productId);
             return product ? { ...item, ...product } : null;
         })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .map(item => ({
+            ...item,
+            // Lo que impide confirmar: se agotó, quedó sin precio o hay menos stock que lo pedido.
+            stockProblem: !isForSale(item)
+                ? 'Sin stock por el momento'
+                : item.quantity > item.availableStock
+                    ? `Solo quedan ${formatWeight(item.availableStock, item.isFractional)}`
+                    : null
+        }));
+    const hasStockProblems = cartItems.some(item => item.stockProblem);
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    // Si la zona elegida no existe (p. ej. el dueño la renombró), usamos la primera disponible.
+    useEffect(() => {
+        const zones = Object.keys(state.deliveryFees);
+        if (zones.length > 0 && !zones.includes(deliveryZone)) setDeliveryZone(zones[0]);
+    }, [state.deliveryFees, deliveryZone]);
 
     // Lógica de Envío Gratis
     const isFreeShipping = state.freeShippingThreshold > 0 && subtotal >= state.freeShippingThreshold;
@@ -65,33 +92,50 @@ const Cart = () => {
     };
 
     const handlePlaceOrder = async () => {
-        if (!customerName || !customerPhone) {
+        // Evita el doble pedido por doble toque mientras se espera a la base.
+        if (isSubmitting) return;
+
+        const name = customerName.trim();
+        const shippingAddress = address.trim();
+
+        if (!name || !customerPhone) {
             showToast('Por favor, ingresa tu nombre y teléfono para coordinar la entrega.', 'warning');
             return;
         }
 
-        if (deliveryMethod === 'Envío' && !address) {
+        if (customerPhone.length < 10) {
+            showToast('Ingresá el teléfono con código de área, sin 0 ni 15 (ej: 2974174655).', 'warning');
+            return;
+        }
+
+        if (deliveryMethod === 'Envío' && !shippingAddress) {
             showToast('Por favor, ingresa tu dirección de envío.', 'warning');
             return;
         }
 
+        if (hasStockProblems) {
+            showToast('Hay productos sin stock suficiente. Ajustá las cantidades para continuar.', 'warning');
+            return;
+        }
+
+        setIsSubmitting(true);
         try {
             const orderSummary = {
                 items: cartItems.map(item => ({
                     name: item.name,
                     quantity: formatWeight(item.quantity, item.isFractional),
-                    price: item.price
+                    lineTotal: item.price * item.quantity
                 })),
                 total: total
             };
 
             const orderId = await placeOrder({
-                customerName,
+                customerName: name,
                 customerPhone,
                 deliveryMethod,
                 deliveryZone: deliveryMethod === 'Envío' ? deliveryZone : undefined,
                 deliveryFee: deliveryFee,
-                address: deliveryMethod === 'Envío' ? address : undefined
+                address: deliveryMethod === 'Envío' ? shippingAddress : undefined
             });
 
             setLastOrderSummary(orderSummary);
@@ -101,28 +145,33 @@ const Cart = () => {
             // Envío automático de notificación por email al dueño
             sendOrderNotification({
                 orderId,
-                customerName,
+                customerName: name,
                 customerPhone,
                 deliveryMethod,
                 deliveryZone: deliveryMethod === 'Envío' ? deliveryZone : undefined,
-                address,
+                address: deliveryMethod === 'Envío' ? shippingAddress : undefined,
                 total: orderSummary.total,
                 items: orderSummary.items
             });
         } catch (error: any) {
             console.error('Error al realizar el pedido:', error);
-            showToast('Hubo un error al procesar tu pedido. Por favor intenta de nuevo.', 'error');
+            showToast(orderErrorMessage(error), 'error');
+            // El stock o los precios pueden haber cambiado: traemos lo último para que
+            // el carrito muestre qué hay que ajustar.
+            refreshProducts().catch(() => { /* sin conexión: queda lo que había */ });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     if (isOrdered) {
         const waLink = lastOrderSummary ? generateWhatsAppLink({
             orderId: lastOrderId,
-            customerName,
+            customerName: customerName.trim(),
             customerPhone,
             deliveryMethod,
             deliveryZone: deliveryMethod === 'Envío' ? deliveryZone : undefined,
-            address,
+            address: deliveryMethod === 'Envío' ? address.trim() : undefined,
             total: lastOrderSummary.total,
             deliveryFee: deliveryMethod === 'Envío' ? deliveryFee : undefined,
             items: lastOrderSummary.items
@@ -135,7 +184,7 @@ const Cart = () => {
                 </div>
                 <h1 className="text-2xl font-bold mb-2">¡Reserva Completada!</h1>
                 <p className="text-slate-500 mb-8 max-w-xs">
-                    Tu pedido <span className="text-primary-dark font-bold">#{lastOrderId}</span> ha sido recibido.
+                    Tu pedido <span className="text-primary-dark font-bold">{lastOrderId}</span> ha sido recibido.
                     <br />
                     Para agilizar la entrega y coordinar el pago, <span className="font-bold text-slate-700 dark:text-slate-200">confirmá tu pedido por WhatsApp</span>.
                 </p>
@@ -190,10 +239,15 @@ const Cart = () => {
                                     <p className="font-bold text-slate-900 dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
                                 </div>
                                 <div className="flex items-center justify-between mt-2">
-                                    <p className="text-[11px] text-green-600 dark:text-primary font-medium bg-green-50 dark:bg-primary/10 px-2 py-0.5 rounded-full">En stock</p>
+                                    {item.stockProblem ? (
+                                        <p className="text-[11px] text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-full">{item.stockProblem}</p>
+                                    ) : (
+                                        <p className="text-[11px] text-green-600 dark:text-primary font-medium bg-green-50 dark:bg-primary/10 px-2 py-0.5 rounded-full">En stock</p>
+                                    )}
                                     <div className="flex items-center bg-slate-50 dark:bg-slate-700/50 rounded-full p-1 border border-slate-100 dark:border-slate-600">
                                         <button
                                             onClick={() => handleDecrementFromCart(item.productId)}
+                                            aria-label="Quitar uno"
                                             className="w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white hover:scale-105 active:scale-95 transition-transform"
                                         >
                                             <span aria-hidden="true" className="material-symbols-outlined text-xs">{item.quantity <= (item.isFractional ? (item.fractionalStep || 0) / 1000 : 1) ? 'delete' : 'remove'}</span>
@@ -201,7 +255,9 @@ const Cart = () => {
                                         <span className="w-14 text-center text-[11px] font-bold text-slate-900 dark:text-white tracking-tighter">{formatWeight(item.quantity, item.isFractional)}</span>
                                         <button
                                             onClick={() => handleAddToCart(item.productId)}
-                                            className="w-7 h-7 flex items-center justify-center rounded-full bg-primary text-slate-900 shadow-sm hover:scale-105 active:scale-95 transition-transform"
+                                            disabled={!isForSale(item) || Number((item.quantity + (item.isFractional ? (item.fractionalStep || 0) / 1000 : 1)).toFixed(3)) > item.availableStock}
+                                            aria-label="Agregar uno más"
+                                            className="w-7 h-7 flex items-center justify-center rounded-full bg-primary text-slate-900 shadow-sm hover:scale-105 active:scale-95 transition-transform disabled:opacity-40 disabled:hover:scale-100"
                                         >
                                             <span aria-hidden="true" className="material-symbols-outlined text-xs font-bold">add</span>
                                         </button>
@@ -252,7 +308,9 @@ const Cart = () => {
                                         <span className="text-xs font-bold">
                                             {!isFreeShipping
                                                 ? 'Envío gratis a partir de'
-                                                : appliesFreeShipping
+                                                : deliveryMethod !== 'Envío'
+                                                    ? 'Tenés envío gratis en Rada Tilly'
+                                                    : appliesFreeShipping
                                                     ? '¡Tenés envío gratis!'
                                                     : 'Envío gratis solo en Rada Tilly'}
                                         </span>
@@ -274,7 +332,9 @@ const Cart = () => {
                                     </>
                                 ) : (
                                     <p className="text-[11px] text-primary-dark dark:text-primary font-bold">
-                                        {appliesFreeShipping
+                                        {deliveryMethod !== 'Envío'
+                                            ? 'Si preferís envío a domicilio en Rada Tilly, no tiene costo.'
+                                            : appliesFreeShipping
                                             ? 'Alcanzaste el beneficio de envío gratis a domicilio.'
                                             : `Alcanzaste el monto, pero el beneficio aplica solo a Rada Tilly. El envío a ${deliveryZone} tiene costo.`}
                                     </p>
@@ -378,10 +438,11 @@ const Cart = () => {
                 <div className="absolute bottom-0 left-0 w-full bg-background-light dark:bg-background-dark p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-slate-100 dark:border-slate-800 z-30">
                     <button
                         onClick={handlePlaceOrder}
-                        className="w-full bg-primary hover:bg-[#72d411] active:scale-[0.98] transition-all text-slate-900 font-bold text-base py-4 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+                        disabled={isSubmitting}
+                        className="w-full bg-primary hover:bg-[#72d411] active:scale-[0.98] transition-all text-slate-900 font-bold text-base py-4 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait"
                     >
-                        Confirmar pedido
-                        <span aria-hidden="true" className="material-symbols-outlined">arrow_forward</span>
+                        {isSubmitting ? 'Enviando pedido…' : 'Confirmar pedido'}
+                        {!isSubmitting && <span aria-hidden="true" className="material-symbols-outlined">arrow_forward</span>}
                     </button>
                 </div>
             )}

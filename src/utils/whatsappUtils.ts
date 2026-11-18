@@ -9,17 +9,18 @@ interface WhatsAppMessageData {
     address?: string;
     total: number;
     deliveryFee?: number;
-    items: { name: string; quantity: string; price: number }[];
+    /** quantity es el texto para mostrar ("500gr", "2 un."); lineTotal el importe ya calculado. */
+    items: { name: string; quantity: string; lineTotal: number }[];
 }
 
 export const generateWhatsAppLink = (data: WhatsAppMessageData) => {
     const itemsList = data.items
-        .map(item => `• ${item.quantity} x ${item.name} ($$${(item.price * parseFloat(item.quantity)).toFixed(2)})`)
+        .map(item => `• ${item.quantity} x ${item.name} ($${item.lineTotal.toFixed(2)})`)
         .join('\n');
 
     const message = `🛒 *Nueva Reserva - #CHIA*
 
-*Pedido:* #${data.orderId}
+*Pedido:* ${data.orderId}
 *Cliente:* ${data.customerName}
 *Contacto:* ${data.customerPhone}
 *Entrega:* ${data.deliveryMethod}${data.deliveryMethod === 'Envío' ? ` (${data.deliveryZone})\n*Dirección:* ${data.address}${data.deliveryFee !== undefined ? `\n*Costo de Envío:* ${data.deliveryFee === 0 ? 'Gratis' : `$${data.deliveryFee.toFixed(2)}`}` : ''}` : ''}
