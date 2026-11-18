@@ -230,16 +230,20 @@ export const supabaseService = {
             // 1. Fetch all existing product codigos and IDs in a single query
             const { data: existingProducts, error: fetchError } = await supabase
                 .from('products')
-                .select('id, codigo');
+                .select('id, codigo, reserved_stock');
 
             if (fetchError) throw fetchError;
 
-            const existingMap = new Map<string, string>();
+            const existingMap = new Map<string, { id: string; reserved: number }>();
             (existingProducts || []).forEach(p => {
                 if (p.codigo) {
-                    existingMap.set(p.codigo.trim(), p.id);
+                    existingMap.set(p.codigo.trim(), { id: p.id, reserved: Number(p.reserved_stock) || 0 });
                 }
             });
+
+            // El Excel trae floats como 0.15000000000000002: el stock va a gramos
+            // (3 decimales) y el precio a centavos.
+            const round = (n: number, decimals: number) => Number(n.toFixed(decimals));
 
             // 2. Prepare records for upsert
             const recordsToUpsert = rows.map(row => {
@@ -247,18 +251,22 @@ export const supabaseService = {
                 const category = findParentCategory(subcategory);
                 const cleanCodigo = (row.codigo || '').trim();
 
-                const existingId = existingMap.get(cleanCodigo);
+                const existing = existingMap.get(cleanCodigo);
+                const price = round(row.ventaValorizada, 2);
 
-                if (existingId) {
+                if (existing) {
                     updated++;
+                    // El Excel es el stock físico del local, que todavía incluye lo
+                    // reservado por pedidos web sin entregar. Un stock negativo del
+                    // sistema de caja (vendido de más) se toma como 0.
                     return {
-                        id: existingId,
+                        id: existing.id,
                         codigo: cleanCodigo,
                         name: row.nombre,
-                        price: row.ventaValorizada,
+                        price,
                         category: category,
                         subcategory: subcategory,
-                        available_stock: row.stock
+                        available_stock: Math.max(0, round(row.stock - existing.reserved, 3))
                     };
                 } else {
                     created++;
@@ -266,12 +274,12 @@ export const supabaseService = {
                         codigo: cleanCodigo,
                         name: row.nombre,
                         description: row.nombre,
-                        price: row.ventaValorizada,
+                        price,
                         category: category,
                         subcategory: subcategory,
                         image: '',
                         unit: 'un.',
-                        available_stock: row.stock,
+                        available_stock: Math.max(0, round(row.stock, 3)),
                         reserved_stock: 0
                     };
                 }

@@ -129,6 +129,10 @@ function parseNumber(value: any): number {
     } else if (hasComma) {
         // Only comma, treat as decimal
         cleaned = cleaned.replace(',', '.');
+    } else if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(cleaned)) {
+        // "1.500" o "12.345.678": punto de miles en formato argentino. Sin esta
+        // regla "1.500" se leía 1,5. "0.750" no entra (empieza con 0): es decimal.
+        cleaned = cleaned.replace(/\./g, '');
     }
     // If only dot, treat as decimal (default parseFloat behavior)
 
