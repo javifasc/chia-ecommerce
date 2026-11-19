@@ -14,15 +14,27 @@ export const supabaseService = {
     // --- Products ---
     // Lectura pública: usa supabasePublic para que una sesión vencida nunca bloquee el catálogo.
     async getProducts(): Promise<Product[]> {
-        const { data, error } = await supabasePublic
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
+        // Supabase devuelve como máximo 1000 filas por consulta: con más productos, el
+        // resto no aparecía ni en la tienda ni en el inventario. Se piden en tandas.
+        // El id desempata: los productos de una misma importación comparten created_at
+        // y sin un orden único una tanda podía repetir o saltear filas.
+        const PAGE = 1000;
+        const data: any[] = [];
+        for (let from = 0; ; from += PAGE) {
+            const { data: page, error } = await supabasePublic
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .order('id')
+                .range(from, from + PAGE - 1);
 
-        if (error) throw error;
+            if (error) throw error;
+            data.push(...(page || []));
+            if (!page || page.length < PAGE) break;
+        }
 
         // Map snake_case to camelCase
-        return (data || []).map(p => ({
+        return data.map(p => ({
             id: p.id,
             codigo: p.codigo,
             name: p.name,
