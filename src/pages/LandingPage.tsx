@@ -17,7 +17,8 @@ const LandingPage = () => {
             desc: 'Gran variedad de opciones seguras y deliciosas para celíacos y sensibles al gluten.'
         },
         {
-            icon: 'set_meal',
+            // set_meal es un plato con un pescado: no va con Plant Based.
+            icon: 'potted_plant',
             title: 'Plant Based',
             desc: 'Fomentamos una alimentación consciente con alternativas vegetales para cada comida.'
         },

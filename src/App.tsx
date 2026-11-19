@@ -9,6 +9,7 @@ import ProductDetail from './pages/ProductDetail';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import NotFound from './pages/NotFound';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import WhatsAppFAB from './components/WhatsAppFAB';
 
@@ -97,6 +98,9 @@ function App() {
                             <SuggestionsAdmin />
                         </ProtectedRoute>
                     } />
+
+                    {/* Cualquier otra dirección: antes quedaba en blanco. */}
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </Suspense>
         </Router>

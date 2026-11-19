@@ -182,7 +182,7 @@ const AdminDashboard = () => {
                             </span>
                         )}
                     </Link>
-                    <Link to="/" className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300">
+                    <Link to="/shop" aria-label="Ver la tienda" title="Ver la tienda" className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300">
                         <span aria-hidden="true" className="material-symbols-outlined">storefront</span>
                     </Link>
                 </div>
